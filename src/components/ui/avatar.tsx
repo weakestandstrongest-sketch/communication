@@ -13,6 +13,7 @@ const SIZE: Record<number, string> = {
   40: "size-10 text-[14px]",
   44: "size-11 text-[15px]",
   48: "size-12 text-[17px]",
+  52: "size-[52px] text-[19px]",
   56: "size-14 text-[20px]",
   72: "size-[72px] text-[26px]",
   88: "size-[88px] text-[32px]",

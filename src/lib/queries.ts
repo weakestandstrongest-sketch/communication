@@ -22,9 +22,10 @@ import type {
   Profile,
 } from "@/lib/types";
 
-export function unwrap<T>(res: { data: T; error: unknown }): T {
+/** Throws the Supabase error, otherwise returns the data. Single-row lookups cast to `X | null` themselves. */
+export function unwrap<T>(res: { data: T | null; error: unknown }): T {
   if (res.error) throw res.error;
-  return res.data;
+  return (res.data ?? null) as T;
 }
 
 export const qk = {
@@ -73,7 +74,7 @@ export function useMyGroups() {
       const rows = unwrap(
         await getSupabase().from("group_members").select("role, group:groups(*)").eq("user_id", userId).order("joined_at"),
       );
-      return rows.filter((r) => r.group).map((r) => ({ ...r.group!, my_role: r.role }));
+      return (rows ?? []).filter((r) => r.group).map((r) => ({ ...r.group!, my_role: r.role }));
     },
   });
 }
@@ -247,7 +248,7 @@ export function useMyAttendance() {
     enabled: Boolean(userId),
     queryFn: async () => {
       const rows = unwrap(await getSupabase().from("event_attendance").select("event_id, status").eq("user_id", userId));
-      return new Map(rows.map((r) => [r.event_id, r.status]));
+      return new Map((rows ?? []).map((r) => [r.event_id, r.status]));
     },
   });
 }
@@ -301,7 +302,7 @@ export function useAnnouncementReads() {
     enabled: Boolean(userId),
     queryFn: async () => {
       const rows = unwrap(await getSupabase().from("announcement_reads").select("announcement_id").eq("user_id", userId));
-      return new Set(rows.map((r) => r.announcement_id));
+      return new Set((rows ?? []).map((r) => r.announcement_id));
     },
   });
 }

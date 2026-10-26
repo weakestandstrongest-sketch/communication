@@ -38,10 +38,11 @@ export async function createTestUser(name: string): Promise<TestUser> {
   return { id: data.user.id, email, name, client };
 }
 
-export async function must<T>(p: PromiseLike<{ data: T; error: unknown }>): Promise<T> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- tests poke at loosely typed RPC results
+export async function must<T>(p: PromiseLike<{ data: T | null; error: unknown }>): Promise<NonNullable<T> & any> {
   const { data, error } = await p;
   if (error) throw new Error(`Unexpected error: ${JSON.stringify(error)}`);
-  return data;
+  return data as NonNullable<T>;
 }
 
 export const DB_URL = process.env.TEST_DATABASE_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
