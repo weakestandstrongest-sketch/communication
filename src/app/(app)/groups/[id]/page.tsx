@@ -396,7 +396,8 @@ function InviteSheet({ open, onClose, groupId, groupName, isAdmin }: { open: boo
   const { data: invite, isLoading, refetch } = useGroupInvite(groupId);
   const toast = useToast();
   const confirm = useConfirm();
-  const url = invite && typeof window !== "undefined" ? `${window.location.origin}/invite/${invite.code}` : "";
+  // openExternalBrowser=1 makes LINE open the link in Safari/Chrome: Google blocks sign-in inside in-app browsers.
+  const url = invite && typeof window !== "undefined" ? `${window.location.origin}/invite/${invite.code}?openExternalBrowser=1` : "";
 
   const copy = async () => {
     try {

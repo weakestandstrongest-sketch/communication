@@ -48,9 +48,12 @@ describe("realtime", () => {
     await subscribe(outsider, "rt-outsider", (ch) =>
       ch.on("postgres_changes", { event: "*", schema: "public", table: "messages" }, (p) => got.outsider.push((p.new as { body: string }).body)),
     );
-    await wait(1000);
-    await must(owner.client.rpc("send_message", { p_conversation_id: conversationId, p_client_id: crypto.randomUUID(), p_body: "リアルタイム確認" }));
-    for (let i = 0; i < 30 && !got.member.includes("リアルタイム確認"); i++) await wait(200);
+    // After `supabase db reset` the local Realtime server needs a moment to reattach to the
+    // replication stream, so keep sending until the member receives one message.
+    for (let attempt = 0; attempt < 10 && !got.member.includes("リアルタイム確認"); attempt++) {
+      await must(owner.client.rpc("send_message", { p_conversation_id: conversationId, p_client_id: crypto.randomUUID(), p_body: "リアルタイム確認" }));
+      for (let i = 0; i < 15 && !got.member.includes("リアルタイム確認"); i++) await wait(200);
+    }
     expect(got.member).toContain("リアルタイム確認");
     await wait(800);
     expect(got.outsider).toHaveLength(0);

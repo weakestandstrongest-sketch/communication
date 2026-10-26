@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useSearchParams } from "next/navigation";
 import { BellRing, CalendarCheck2, MessageCircle, Vote } from "lucide-react";
 import { getSupabase } from "@/lib/supabase/client";
@@ -28,6 +28,12 @@ export function LoginCard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(ERRORS[params.get("error") ?? ""] ?? null);
   const inviting = next.startsWith("/invite/");
+  // Static page: read the user agent after hydration (server snapshot is null).
+  const inApp = useSyncExternalStore(
+    noopSubscribe,
+    () => inAppBrowser(navigator.userAgent),
+    () => null,
+  );
 
   const signIn = async () => {
     setLoading(true);
@@ -79,6 +85,14 @@ export function LoginCard() {
             {error}
           </p>
         )}
+        {inApp && (
+          <div role="alert" className="rounded-2xl bg-warning-soft px-4 py-3 text-[14px] leading-relaxed text-label">
+            <p className="font-semibold text-warning">{inApp}のブラウザではGoogleログインができません</p>
+            <p className="mt-1 text-label-2">
+              画面右上（または右下）のメニューから「ブラウザで開く」「Safariで開く」を選んでから、もう一度ログインしてください。
+            </p>
+          </div>
+        )}
         {!isSupabaseConfigured ? (
           <p role="alert" className="rounded-2xl bg-warning-soft px-4 py-3 text-[14px] leading-relaxed text-warning">
             サーバー設定（NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY）が未設定のため、ログインできません。README のセットアップ手順を確認してください。
@@ -100,6 +114,17 @@ export function LoginCard() {
       </div>
     </div>
   );
+}
+
+const noopSubscribe = () => () => {};
+
+/** Google blocks OAuth inside embedded web views (LINE, Instagram, Facebook …). */
+function inAppBrowser(ua: string): string | null {
+  if (/\bLine\//i.test(ua)) return "LINE";
+  if (/Instagram/i.test(ua)) return "Instagram";
+  if (/FBAN|FBAV|FB_IAB/i.test(ua)) return "Facebook";
+  if (/\bTwitter|X-Client/i.test(ua)) return "X";
+  return null;
 }
 
 function GoogleLogo() {
