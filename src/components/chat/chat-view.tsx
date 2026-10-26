@@ -374,12 +374,15 @@ export function ChatView({ conversationId }: { conversationId: string }) {
       items: imgs.map((a) => ({ path: a.path, thumb_path: a.thumb_path, name: a.name, created_at: m.created_at })),
       index,
     });
-  }, []);
+  }, [setViewer]);
 
-  const onReply = useCallback((m: ChatMessage) => {
-    setEditing(null);
-    setReplyTo(m);
-  }, []);
+  const onReply = useCallback(
+    (m: ChatMessage) => {
+      setEditing(null);
+      setReplyTo(m);
+    },
+    [setEditing, setReplyTo],
+  );
   const onRetry = useCallback((m: ChatMessage) => retryMessage(conversationId, storagePrefix, m.client_id), [conversationId, storagePrefix]);
   const onDiscard = useCallback((m: ChatMessage) => discardMessage(conversationId, m.client_id), [conversationId]);
 
@@ -403,6 +406,16 @@ export function ChatView({ conversationId }: { conversationId: string }) {
   const readCount = useCallback(
     (m: ChatMessage) => others.filter((o) => o.last_read_at >= m.created_at).length,
     [others],
+  );
+
+  const msgs = state.messages;
+  // The first message that arrived after the conversation was last read.
+  const unreadDividerId = useMemo(
+    () =>
+      initialLastRead === null
+        ? null
+        : (msgs.find((m) => !m.local && m.sender_id !== myId && m.kind !== "system" && m.created_at > initialLastRead)?.id ?? null),
+    [msgs, initialLastRead, myId],
   );
 
   const typingNames = Object.keys(typing)
@@ -430,8 +443,6 @@ export function ChatView({ conversationId }: { conversationId: string }) {
           : ""
       : `メンバー ${members?.length ?? summary?.member_count ?? ""}人${onlineOthers.length ? ` ・ ${onlineOthers.length}人がオンライン` : ""}`;
 
-  const msgs = state.messages;
-  let unreadDividerPlaced = false;
 
   return (
     <div
@@ -497,14 +508,7 @@ export function ChatView({ conversationId }: { conversationId: string }) {
                     Math.abs(new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) < GROUP_WINDOW_MS &&
                     dayKey(a.created_at) === dayKey(b.created_at),
                 );
-              const showUnread =
-                !unreadDividerPlaced &&
-                initialLastRead !== null &&
-                !m.local &&
-                m.sender_id !== myId &&
-                m.kind !== "system" &&
-                m.created_at > initialLastRead;
-              if (showUnread) unreadDividerPlaced = true;
+              const showUnread = m.id === unreadDividerId;
               const reply = m.reply_to_id ? findMessage(conversationId, m.reply_to_id) : undefined;
               return (
                 <div key={m.local ? `local-${m.client_id}` : m.id}>

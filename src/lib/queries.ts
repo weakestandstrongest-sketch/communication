@@ -127,7 +127,10 @@ export function useGroupInvite(groupId: string) {
   return useQuery({
     queryKey: qk.invite(groupId),
     queryFn: async () =>
-      unwrap(await getSupabase().from("group_invites").select("code, enabled").eq("group_id", groupId).maybeSingle()),
+      unwrap(await getSupabase().from("group_invites").select("code, enabled").eq("group_id", groupId).maybeSingle()) as {
+        code: string;
+        enabled: boolean;
+      } | null,
   });
 }
 
@@ -347,7 +350,11 @@ export function useUserSettings() {
   return useQuery({
     queryKey: qk.settings,
     enabled: Boolean(userId),
-    queryFn: async () => unwrap(await getSupabase().from("user_settings").select("*").eq("user_id", userId).maybeSingle()),
+    queryFn: async () =>
+      unwrap(await getSupabase().from("user_settings").select("*").eq("user_id", userId).maybeSingle()) as {
+        user_id: string;
+        push_preview: boolean;
+      } | null,
   });
 }
 

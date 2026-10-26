@@ -18,5 +18,7 @@ export async function signOut(userId: string | null) {
     // ignore
   }
   await getSupabase().auth.signOut();
+  // Full reload so no in-memory state from this session survives.
+  // eslint-disable-next-line @next/next/no-location-assign-relative-destination
   window.location.assign("/login");
 }

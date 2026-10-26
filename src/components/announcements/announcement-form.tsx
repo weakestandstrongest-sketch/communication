@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Field, Input, Select, Switch, Textarea } from "@/components/ui/form";
 import { useToast } from "@/components/ui/toast";
 import { GroupPicker, canCreate } from "@/components/polls/poll-form";
+import { useNow } from "@/lib/use-now";
 
 export function AnnouncementForm({
   groupId: fixedGroup,
@@ -27,6 +28,7 @@ export function AnnouncementForm({
   const queryClient = useQueryClient();
   const toast = useToast();
   const editing = Boolean(announcement);
+  const now = useNow();
   const [groupId, setGroupId] = useState(fixedGroup ?? announcement?.group_id ?? "");
   const [title, setTitle] = useState(announcement?.title ?? "");
   const [body, setBody] = useState(announcement?.body ?? "");
@@ -44,7 +46,7 @@ export function AnnouncementForm({
   const selectable = groups?.filter((g) => canCreate(g, "announcement")) ?? [];
   const groupPolls = (polls ?? []).filter((p) => p.group_id === effectiveGroup).slice(0, 30);
   const groupEvents = (events ?? [])
-    .filter((e) => e.group_id === effectiveGroup && new Date(e.starts_at).getTime() > Date.now() - 7 * 86400000)
+    .filter((e) => e.group_id === effectiveGroup && new Date(e.starts_at).getTime() > now - 7 * 86400000)
     .slice(0, 30);
 
   const submit = async (ev: React.FormEvent) => {

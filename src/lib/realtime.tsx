@@ -27,7 +27,9 @@ type Row = Record<string, unknown>;
 export function RealtimeProvider({ children }: { children: ReactNode }) {
   const userId = useUserId();
   const queryClient = useQueryClient();
-  const [state, setState] = useState<ConnectionState>("connecting");
+  const [state, setState] = useState<ConnectionState>(() =>
+    typeof navigator !== "undefined" && !navigator.onLine ? "offline" : "connecting",
+  );
   const hadConnection = useRef(false);
   const hiddenAt = useRef<number | null>(null);
 
@@ -116,7 +118,6 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     window.addEventListener("online", onOnline);
     window.addEventListener("offline", onOffline);
     document.addEventListener("visibilitychange", onVisibility);
-    if (!navigator.onLine) setState("offline");
 
     return () => {
       if (invalidateTimer) clearTimeout(invalidateTimer);

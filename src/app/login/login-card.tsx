@@ -7,6 +7,7 @@ import { getSupabase } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/env";
 import { safeNextPath } from "@/lib/redirect";
 import { Spinner } from "@/components/ui/spinner";
+import { BrandMark } from "@/components/brand";
 
 const ERRORS: Record<string, string> = {
   oauth: "Googleでのログインがキャンセルされたか、失敗しました。もう一度お試しください。",
@@ -49,9 +50,7 @@ export function LoginCard() {
   return (
     <div className="relative w-full max-w-sm animate-pop-in">
       <div className="flex flex-col items-center text-center">
-        <span className="flex size-[72px] items-center justify-center rounded-[22px] bg-accent text-[34px] font-bold text-accent-contrast shadow-[var(--shadow-float)]">
-          つ
-        </span>
+        <BrandMark className="size-[76px] shadow-[var(--shadow-float)]" />
         <h1 className="mt-5 font-[family-name:var(--font-display)] text-[30px] font-bold tracking-tight">つどい</h1>
         <p className="mt-1.5 text-[15px] leading-relaxed text-label-2">
           サークル・部活の連絡を、

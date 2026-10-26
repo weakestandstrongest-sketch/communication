@@ -21,6 +21,7 @@ import { Avatar, GroupAvatar } from "@/components/ui/avatar";
 import { CountBadge } from "@/components/ui/badge";
 import { PageSpinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/cn";
+import { BrandMark } from "@/components/brand";
 
 type NavItem = { href: string; label: string; icon: typeof Home; badge?: number; match: (p: string) => boolean };
 
@@ -93,7 +94,7 @@ function Sidebar() {
   return (
     <aside className="sticky top-0 hidden h-dvh w-[248px] shrink-0 flex-col border-r border-separator bg-surface lg:flex">
       <div className="flex h-16 items-center gap-2.5 px-5">
-        <span className="flex size-8 items-center justify-center rounded-[10px] bg-accent text-[15px] font-bold text-accent-contrast">つ</span>
+        <BrandMark className="size-8" />
         <span className="text-[19px] font-bold tracking-tight">つどい</span>
       </div>
       <nav aria-label="メインナビゲーション" className="flex-1 overflow-y-auto px-3">
