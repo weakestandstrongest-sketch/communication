@@ -216,11 +216,11 @@ export function ChatView({ conversationId }: { conversationId: string }) {
   }, [myId]);
 
   // ---------------------------------------------------------------------------
-  // Mark as read while the conversation is visible and scrolled to the bottom
+  // Mark as read while the conversation is open and the page is visible (like LINE)
   // ---------------------------------------------------------------------------
   const lastMarked = useRef<string | null>(null);
   const markRead = useCallback(async () => {
-    if (document.visibilityState !== "visible" || !atBottom.current) return;
+    if (document.visibilityState !== "visible") return;
     const last = state.messages.findLast((m) => !m.local);
     if (!last || lastMarked.current === last.id) return;
     lastMarked.current = last.id;
@@ -234,7 +234,7 @@ export function ChatView({ conversationId }: { conversationId: string }) {
 
   useEffect(() => {
     if (state.status !== "ready") return;
-    const t = setTimeout(() => void markRead(), 400);
+    const t = setTimeout(() => void markRead(), 150);
     const onVis = () => void markRead();
     document.addEventListener("visibilitychange", onVis);
     return () => {

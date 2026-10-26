@@ -4,12 +4,12 @@ const JAPANESE = /[぀-ヿ一-龯]/;
 
 export function errorMessage(error: unknown, fallback = "エラーが発生しました。もう一度お試しください。"): string {
   if (!error) return fallback;
-  if (typeof navigator !== "undefined" && !navigator.onLine) {
-    return "インターネットに接続されていません。接続を確認してください。";
-  }
   const e = error as { message?: string; code?: string; status?: number; statusCode?: string | number };
   const message = e.message ?? (typeof error === "string" ? error : "");
   if (message && JAPANESE.test(message)) return message;
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    return "インターネットに接続されていません。接続を確認してください。";
+  }
   if (/Failed to fetch|NetworkError|Load failed/i.test(message)) return "通信に失敗しました。接続を確認してください。";
   if (e.code === "42501" || /row-level security|permission denied/i.test(message)) return "この操作を行う権限がありません。";
   if (e.code === "23505") return "すでに登録されています。";

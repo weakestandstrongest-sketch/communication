@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MoreHorizontal, Pencil, Pin, PinOff, Share2, Trash2 } from "lucide-react";
 import { getSupabase } from "@/lib/supabase/client";
@@ -34,29 +34,21 @@ export default function AnnouncementPage() {
   const { data: groups } = useMyGroups();
   const [menu, setMenu] = useState(false);
   const [editing, setEditing] = useState(false);
+  // Viewing an announcement marks it as read, then loads the read count (in that order).
   const { data: readCount } = useQuery({
     queryKey: ["announcementReadCount", id],
-    enabled: Boolean(a),
+    enabled: Boolean(a) && Boolean(reads),
     queryFn: async () => {
-      const { data, error } = await getSupabase().rpc("get_announcement_read_count", { p_announcement_id: id });
+      const supabase = getSupabase();
+      if (!reads?.has(id)) {
+        const { error } = await supabase.from("announcement_reads").insert({ announcement_id: id, user_id: myId });
+        if (!error || error.code === "23505") void queryClient.invalidateQueries({ queryKey: qk.announcementReads });
+      }
+      const { data, error } = await supabase.rpc("get_announcement_read_count", { p_announcement_id: id });
       if (error) throw error;
       return data as { read: number; members: number };
     },
   });
-
-  // Viewing an announcement marks it as read.
-  useEffect(() => {
-    if (!a || !reads || reads.has(a.id)) return;
-    void getSupabase()
-      .from("announcement_reads")
-      .insert({ announcement_id: a.id, user_id: myId })
-      .then(({ error }) => {
-        if (!error || error.code === "23505") {
-          void queryClient.invalidateQueries({ queryKey: qk.announcementReads });
-          void queryClient.invalidateQueries({ queryKey: ["announcementReadCount", id] });
-        }
-      });
-  }, [a, reads, myId, queryClient, id]);
 
   if (isLoading) return (<><PageHeader title="お知らせ" back /><ListSkeleton rows={3} /></>);
   if (!a) {
