@@ -56,39 +56,35 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       loadedConversationIds().forEach((cid) => void loadLatest(cid));
     };
 
-    const rowOf = (p: RealtimePostgresChangesPayload<Row>) => (p.eventType === "DELETE" ? p.old : p.new) as Row;
+    // Only INSERT and UPDATE: Realtime cannot apply RLS to DELETE events, so subscribing to
+    // them would reveal deleted row ids to every signed-in user. Deleted polls/events/
+    // announcements still reach members through the UPDATE of their chat card (FK set null).
+    const changes = ["INSERT", "UPDATE"] as const;
+    let channel = supabase.channel(`user:${userId}`);
+    const on = (table: string, handler: (row: Row) => void, filter?: string) => {
+      for (const event of changes) {
+        channel = channel.on("postgres_changes", { event, schema: "public", table, ...(filter ? { filter } : {}) }, (p: RealtimePostgresChangesPayload<Row>) =>
+          handler(p.new as Row),
+        );
+      }
+    };
 
-    const channel = supabase
-      .channel(`user:${userId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, (p) => {
-        if (p.eventType !== "DELETE") applyServerMessage(p.new as unknown as MessageRow);
-        invalidate(qk.conversations);
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "conversation_members", filter: `user_id=eq.${userId}` }, () =>
-        invalidate(qk.conversations),
-      )
-      .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` }, () =>
-        invalidate(qk.notifications),
-      )
-      .on("postgres_changes", { event: "*", schema: "public", table: "polls" }, (p) => {
-        const id = rowOf(p).id as string | undefined;
-        invalidate(qk.polls, ...(id ? [qk.poll(id), qk.pollResults(id)] : []));
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "events" }, (p) => {
-        const id = rowOf(p).id as string | undefined;
-        invalidate(qk.events, ...(id ? [qk.event(id), qk.attendance(id)] : []));
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "event_attendance" }, (p) => {
-        const id = rowOf(p).event_id as string | undefined;
-        invalidate(qk.myAttendance, ...(id ? [qk.attendance(id)] : []));
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "announcements" }, (p) => {
-        const id = rowOf(p).id as string | undefined;
-        invalidate(qk.announcements, ...(id ? [qk.announcement(id)] : []));
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "group_members" }, () =>
-        invalidate(qk.groups, qk.members, qk.conversations, qk.polls),
-      )
+    on("messages", (row) => {
+      applyServerMessage(row as unknown as MessageRow);
+      invalidate(qk.conversations);
+      if (row.kind !== "text" && row.kind !== "image" && row.kind !== "file" && row.kind !== "system") {
+        invalidate(qk.polls, qk.events, qk.announcements);
+      }
+    });
+    on("conversation_members", () => invalidate(qk.conversations), `user_id=eq.${userId}`);
+    on("notifications", () => invalidate(qk.notifications), `user_id=eq.${userId}`);
+    on("polls", (row) => invalidate(qk.polls, qk.poll(row.id as string), qk.pollResults(row.id as string)));
+    on("events", (row) => invalidate(qk.events, qk.event(row.id as string), qk.attendance(row.id as string)));
+    on("event_attendance", (row) => invalidate(qk.myAttendance, qk.attendance(row.event_id as string)));
+    on("announcements", (row) => invalidate(qk.announcements, qk.announcement(row.id as string)));
+    on("group_members", () => invalidate(qk.groups, qk.members, qk.conversations, qk.polls));
+
+    channel
       .subscribe((status) => {
         if (status === "SUBSCRIBED") {
           if (hadConnection.current) resync();

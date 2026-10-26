@@ -84,13 +84,13 @@ export function PollCard({ pollId }: { pollId: string }) {
           })}
           {poll.options.length > 4 && <li className="px-1 text-[12px] text-label-3">ほか{poll.options.length - 4}件の選択肢</li>}
         </ul>
-        <div className="mt-3 flex items-center gap-2 text-[12px] text-label-3">
-          <span className="tabular">
+        <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-label-3">
+          <span className="whitespace-nowrap tabular">
             {total}
             {eligible ? `/${eligible}` : ""}人が回答
           </span>
           <span aria-hidden>・</span>
-          <span>{closed ? "締切済み" : formatDeadline(poll.deadline)}</span>
+          <span className="whitespace-nowrap">{closed ? "締切済み" : formatDeadline(poll.deadline)}</span>
           <span className="ml-auto">
             {results?.responded ? (
               <Pill tone="success">回答済み</Pill>
@@ -136,11 +136,13 @@ export function EventCard({ eventId }: { eventId: string }) {
             <span className="truncate">{event.location}</span>
           </p>
         )}
-        <p className="mt-1 flex items-center gap-1.5 text-[12px] text-label-3">
-          <span className="size-2 rounded-full" style={{ background: CATEGORY_COLOR[event.category] }} aria-hidden />
-          {CATEGORY_LABEL[event.category]}
+        <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[12px] text-label-3">
+          <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+            <span className="size-2 rounded-full" style={{ background: CATEGORY_COLOR[event.category] }} aria-hidden />
+            {CATEGORY_LABEL[event.category]}
+          </span>
           {event.rsvp_enabled && (
-            <span className="ml-auto tabular">
+            <span className="ml-auto whitespace-nowrap tabular">
               参加 {event.going_count} ・ 未定 {event.maybe_count} ・ 不参加 {event.not_going_count}
             </span>
           )}

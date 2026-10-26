@@ -514,7 +514,7 @@ export function ChatView({ conversationId }: { conversationId: string }) {
                 <div key={m.local ? `local-${m.client_id}` : m.id}>
                   {newDay && (
                     <div className="sticky top-1 z-[2] my-3 flex justify-center">
-                      <span className="glass rounded-full px-3 py-1 text-[12px] font-semibold text-label-2 shadow-[var(--shadow-card)]">
+                      <span className="rounded-full bg-surface px-3 py-1 text-[12px] font-semibold text-label-2 shadow-[var(--shadow-card)]">
                         {formatDaySeparator(m.created_at)}
                       </span>
                     </div>

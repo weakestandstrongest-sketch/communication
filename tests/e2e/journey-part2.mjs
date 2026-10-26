@@ -101,7 +101,7 @@ export async function runPart2({ browser, A, B, C, X, owner, member, member2, st
     await dialog.getByRole("radio", { name: /試合・大会/ }).click();
     await dialog.getByLabel("場所（任意）").fill("市民テニスコート");
     await dialog.getByRole("button", { name: "予定を作成" }).click();
-    await C.getByText("練習試合 vs 東和大学").first().waitFor({ timeout: 8000 });
+    await C.getByRole("log").getByText("練習試合 vs 東和大学").first().waitFor({ timeout: 8000 });
     const { data } = await admin.from("events").select("id").eq("group_id", groupId).eq("title", "練習試合 vs 東和大学");
     if (data.length !== 1) throw new Error(`expected exactly one event record, got ${data.length}`);
     eventId = data[0].id;

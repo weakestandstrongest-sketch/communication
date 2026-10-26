@@ -170,6 +170,8 @@ await step("opening the conversation clears the unread badge", async () => {
 if (process.env.JOURNEY_PART !== "1-only") {
   const { runPart2 } = await import("./journey-part2.mjs");
   await runPart2({ browser, A, B, C, X, owner, member, member2, outsider, step, shot, groupId, conversationId, admin });
+  const { runPart3 } = await import("./journey-part3.mjs");
+  await runPart3({ browser, B, C, member, member2, step, shot, admin });
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);
