@@ -1,26 +1,199 @@
 @import "tailwindcss";
 
+/*
+ * つどい design tokens.
+ * Neutral iOS-like grays with a single restrained accent (藍 / indigo).
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --bg: #f2f2f7;
+  --surface: #ffffff;
+  --surface-2: #f7f7fa;
+  --surface-3: #ececf1;
+  --elevated: rgba(255, 255, 255, 0.86);
+  --label: #1c1c1e;
+  --label-2: #5f5f66;
+  --label-3: #8e8e95;
+  --label-4: #c2c2c8;
+  --separator: rgba(60, 60, 67, 0.13);
+  --separator-strong: rgba(60, 60, 67, 0.22);
+  --accent: #3d55d6;
+  --accent-strong: #2f45bd;
+  --accent-soft: rgba(61, 85, 214, 0.1);
+  --accent-contrast: #ffffff;
+  --danger: #e5383b;
+  --danger-soft: rgba(229, 56, 59, 0.1);
+  --success: #23a35a;
+  --success-soft: rgba(35, 163, 90, 0.12);
+  --warning: #e08a00;
+  --warning-soft: rgba(224, 138, 0, 0.12);
+  --chat-bg: #eceef5;
+  --bubble-in: #ffffff;
+  --bubble-out: #3d55d6;
+  --bubble-out-label: #ffffff;
+  --shadow-color: 220 20% 20%;
+  color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --bg: #000000;
+    --surface: #1c1c1e;
+    --surface-2: #232326;
+    --surface-3: #2c2c2e;
+    --elevated: rgba(28, 28, 30, 0.86);
+    --label: #f5f5f7;
+    --label-2: #b4b4bb;
+    --label-3: #85858c;
+    --label-4: #48484d;
+    --separator: rgba(84, 84, 88, 0.42);
+    --separator-strong: rgba(84, 84, 88, 0.65);
+    --accent: #7d8eff;
+    --accent-strong: #97a5ff;
+    --accent-soft: rgba(125, 142, 255, 0.16);
+    --accent-contrast: #0d1240;
+    --danger: #ff5a5f;
+    --danger-soft: rgba(255, 90, 95, 0.16);
+    --success: #34c46f;
+    --success-soft: rgba(52, 196, 111, 0.16);
+    --warning: #ffad33;
+    --warning-soft: rgba(255, 173, 51, 0.16);
+    --chat-bg: #0b0b0d;
+    --bubble-in: #26262a;
+    --bubble-out: #4b5fd9;
+    --bubble-out-label: #ffffff;
+    --shadow-color: 0 0% 0%;
+    color-scheme: dark;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-elevated: var(--elevated);
+  --color-label: var(--label);
+  --color-label-2: var(--label-2);
+  --color-label-3: var(--label-3);
+  --color-label-4: var(--label-4);
+  --color-separator: var(--separator);
+  --color-separator-strong: var(--separator-strong);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-contrast: var(--accent-contrast);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-chat-bg: var(--chat-bg);
+  --color-bubble-in: var(--bubble-in);
+  --color-bubble-out: var(--bubble-out);
+  --color-bubble-out-label: var(--bubble-out-label);
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+    "Noto Sans JP", "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+    "Noto Sans JP", "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
+
+  --radius-card: 18px;
+  --radius-bubble: 20px;
+
+  --shadow-card: 0 1px 2px hsl(var(--shadow-color) / 0.05), 0 2px 8px hsl(var(--shadow-color) / 0.04);
+  --shadow-float: 0 8px 30px hsl(var(--shadow-color) / 0.14), 0 2px 6px hsl(var(--shadow-color) / 0.08);
+
+  --animate-fade-in: fade-in 180ms ease-out;
+  --animate-sheet-up: sheet-up 260ms cubic-bezier(0.32, 0.72, 0, 1);
+  --animate-pop-in: pop-in 200ms cubic-bezier(0.34, 1.4, 0.64, 1);
+  --animate-message-in: message-in 220ms cubic-bezier(0.25, 0.9, 0.3, 1);
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes sheet-up {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  @keyframes pop-in {
+    from { opacity: 0; transform: scale(0.94); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes message-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    height: 100%;
+  }
+  body {
+    min-height: 100%;
+    background: var(--bg);
+    color: var(--label);
+    font-family: var(--font-sans);
+    font-feature-settings: "palt" 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.5;
+    overscroll-behavior-y: none;
+  }
+  button, [role="button"] {
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  input, textarea, select {
+    font: inherit;
+    /* iOS zooms into inputs below 16px */
+    font-size: max(16px, 1em);
+  }
+  ::selection {
+    background: var(--accent-soft);
+  }
+}
+
+@layer utilities {
+  .pt-safe { padding-top: env(safe-area-inset-top); }
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+  .pl-safe { padding-left: env(safe-area-inset-left); }
+  .pr-safe { padding-right: env(safe-area-inset-right); }
+  .mb-safe { margin-bottom: env(safe-area-inset-bottom); }
+  .h-tabbar { height: calc(56px + env(safe-area-inset-bottom)); }
+  .pb-tabbar { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+  .glass {
+    background: var(--elevated);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+  }
+  .hairline-b { box-shadow: inset 0 -0.5px 0 var(--separator-strong); }
+  .hairline-t { box-shadow: inset 0 0.5px 0 var(--separator-strong); }
+  .scrollbar-none { scrollbar-width: none; }
+  .scrollbar-none::-webkit-scrollbar { display: none; }
+  .text-balance { text-wrap: balance; }
+  .break-anywhere { overflow-wrap: anywhere; word-break: normal; line-break: strict; }
+  .tabular { font-variant-numeric: tabular-nums; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
