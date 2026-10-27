@@ -54,47 +54,49 @@ export function LoginCard() {
   };
 
   return (
-    <div className="relative w-full max-w-sm animate-pop-in">
-      <div className="flex flex-col items-center text-center">
-        <BrandMark className="size-[76px] shadow-[var(--shadow-float)]" />
-        <h1 className="mt-5 font-[family-name:var(--font-display)] text-[30px] font-bold tracking-tight">Jam</h1>
-        <p className="mt-1.5 text-[15px] leading-relaxed text-label-2">
-          サークル・部活の連絡を、
-          <br />
-          ひとつの場所に。
-        </p>
+    <div className="relative z-10 my-auto flex w-full max-w-sm flex-col items-center py-8">
+      <div className="login-rise login-float" style={{ animationDelay: "0ms, 0ms" }}>
+        <BrandMark className="size-[108px] [@media(max-height:700px)]:size-[84px] shadow-[0_24px_60px_-12px_rgba(240,201,180,0.35)]" />
       </div>
+      <h1 className="login-rise mt-8 font-[family-name:var(--font-display)] text-[68px] [@media(max-height:700px)]:mt-5 [@media(max-height:700px)]:text-[52px] leading-none font-bold tracking-[-0.04em]" style={{ animationDelay: "120ms" }}>
+        Jam
+      </h1>
+      <p className="login-rise mt-4 text-center text-[15px] leading-relaxed text-white/60" style={{ animationDelay: "220ms" }}>
+        サークル・部活の連絡を、
+        <br />
+        ひとつの場所に。
+      </p>
 
-      <ul className="mt-8 grid grid-cols-2 gap-2">
+      <ul className="login-rise mt-8 flex flex-wrap justify-center gap-2" style={{ animationDelay: "320ms" }}>
         {FEATURES.map(({ icon: Icon, label }) => (
-          <li key={label} className="flex items-center gap-2 rounded-2xl bg-surface px-3 py-3 text-[13px] font-medium shadow-[var(--shadow-card)]">
-            <Icon className="size-[18px] shrink-0 text-accent" aria-hidden />
+          <li key={label} className="flex items-center gap-1.5 rounded-full border border-white/12 bg-white/[0.06] px-3 py-1.5 text-[12px] font-medium text-white/80">
+            <Icon className="size-[14px] shrink-0 text-[#f0c9b4]" aria-hidden />
             {label}
           </li>
         ))}
       </ul>
 
-      <div className="mt-8 space-y-3">
+      <div className="login-rise mt-10 w-full space-y-3" style={{ animationDelay: "420ms" }}>
         {inviting && (
-          <p className="rounded-2xl bg-accent-soft px-4 py-3 text-center text-[14px] font-medium text-accent">
+          <p className="rounded-2xl border border-[#f0c9b4]/30 bg-[#f0c9b4]/10 px-4 py-3 text-center text-[14px] font-medium text-[#f0c9b4]">
             グループに招待されています。ログインして参加しましょう。
           </p>
         )}
         {error && (
-          <p role="alert" className="rounded-2xl bg-danger-soft px-4 py-3 text-[14px] leading-relaxed text-danger">
+          <p role="alert" className="rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-[14px] leading-relaxed text-red-300">
             {error}
           </p>
         )}
         {inApp && (
-          <div role="alert" className="rounded-2xl bg-warning-soft px-4 py-3 text-[14px] leading-relaxed text-label">
-            <p className="font-semibold text-warning">{inApp}のブラウザではGoogleログインができません</p>
-            <p className="mt-1 text-label-2">
+          <div role="alert" className="rounded-2xl border border-amber-300/30 bg-amber-400/10 px-4 py-3 text-[14px] leading-relaxed text-white/90">
+            <p className="font-semibold text-amber-300">{inApp}のブラウザではGoogleログインができません</p>
+            <p className="mt-1 text-white/60">
               画面右上（または右下）のメニューから「ブラウザで開く」「Safariで開く」を選んでから、もう一度ログインしてください。
             </p>
           </div>
         )}
         {!isSupabaseConfigured ? (
-          <p role="alert" className="rounded-2xl bg-warning-soft px-4 py-3 text-[14px] leading-relaxed text-warning">
+          <p role="alert" className="rounded-2xl border border-amber-300/30 bg-amber-400/10 px-4 py-3 text-[14px] leading-relaxed text-amber-300">
             サーバー設定（NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY）が未設定のため、ログインできません。README のセットアップ手順を確認してください。
           </p>
         ) : (
@@ -102,13 +104,13 @@ export function LoginCard() {
             type="button"
             onClick={signIn}
             disabled={loading}
-            className="flex h-[54px] w-full items-center justify-center gap-3 rounded-2xl border border-separator-strong bg-surface text-[16px] font-semibold text-label shadow-[var(--shadow-card)] transition active:scale-[0.98] disabled:opacity-60"
+            className="flex h-14 w-full items-center justify-center gap-3 rounded-full bg-[#f5f3ee] text-[16px] font-bold text-[#0b0b0c] shadow-[0_10px_40px_-10px_rgba(245,243,238,0.45)] transition active:scale-[0.97] disabled:opacity-60"
           >
             {loading ? <Spinner className="size-5" /> : <GoogleLogo />}
             Googleでログイン
           </button>
         )}
-        <p className="px-2 text-center text-[12px] leading-relaxed text-label-3">
+        <p className="px-3 pt-1 text-center text-[11.5px] leading-relaxed text-white/40">
           ログインすると、Googleアカウントの名前とプロフィール画像がグループのメンバーに表示されます。
         </p>
       </div>

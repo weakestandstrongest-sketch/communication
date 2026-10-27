@@ -237,3 +237,27 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Login screen */
+@keyframes login-rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes login-float {
+  0%, 100% { transform: translateY(0) rotate(-1.5deg); }
+  50% { transform: translateY(-9px) rotate(1.5deg); }
+}
+@keyframes login-orbit-a {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(26px, 18px) scale(1.06); }
+}
+@keyframes login-orbit-b {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-30px, 22px) scale(0.95); }
+}
+@keyframes login-orbit-c {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(14px, -28px) scale(1.08); }
+}
+.login-rise { animation: login-rise 700ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.login-float { animation: login-float 7s ease-in-out infinite; }
