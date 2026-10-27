@@ -610,6 +610,20 @@ await step("talk search finds old messages and 固定 pins one to the top", asyn
   await B.getByRole("button", { name: /^固定メッセージ/ }).waitFor({ state: "detached", timeout: 8000 });
 });
 
+await step("the launch animation plays once per session and never blocks taps", async () => {
+  const ctx = await browser.newContext({ ...iphone });
+  const p = await ctx.newPage();
+  await p.goto(`${APP_URL}/login`);
+  const splash = p.locator(".jam-splash");
+  if (!(await splash.isVisible())) throw new Error("splash not shown on first launch");
+  if ((await splash.evaluate((el) => getComputedStyle(el).pointerEvents)) !== "none") throw new Error("splash would block taps");
+  await p.waitForTimeout(2000);
+  if (await splash.isVisible()) throw new Error("splash did not go away");
+  await p.reload();
+  if (await splash.isVisible()) throw new Error("splash replayed in the same session");
+  await ctx.close();
+});
+
 console.log(`\n${passed} passed, ${failed} failed`);
 await browser.close();
 process.exit(failed ? 1 : 0);

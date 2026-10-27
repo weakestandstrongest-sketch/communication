@@ -261,3 +261,65 @@
 }
 .login-rise { animation: login-rise 700ms cubic-bezier(0.22, 1, 0.36, 1) both; }
 .login-float { animation: login-float 7s ease-in-out infinite; }
+
+/* Launch animation (see components/splash.tsx). ~1.6s, once per session. */
+.jam-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: #0b0b0c;
+  pointer-events: none;
+  animation: jam-splash-out 420ms cubic-bezier(0.4, 0, 0.2, 1) 1250ms both;
+}
+.no-splash .jam-splash { display: none; }
+.jam-splash-logo { width: 132px; height: 132px; overflow: visible; animation: jam-logo-out 420ms cubic-bezier(0.5, 0, 0.75, 0) 1250ms both; }
+.jam-splash-logo * { transform-box: fill-box; transform-origin: center; }
+.jam-splash-bubble { animation: jam-bubble-in 520ms cubic-bezier(0.34, 1.56, 0.64, 1) 60ms both; }
+.jam-splash-shadow { animation: jam-shadow-out 520ms cubic-bezier(0.22, 1, 0.36, 1) 330ms both; }
+.jam-splash-j { stroke-dasharray: 1; animation: jam-draw 420ms cubic-bezier(0.65, 0, 0.35, 1) 420ms both; }
+.jam-splash-dot { animation: jam-dot 360ms cubic-bezier(0.34, 1.8, 0.64, 1) both; }
+.jam-splash-dot:nth-of-type(1) { animation-delay: 760ms; }
+.jam-splash-dot:nth-of-type(2) { animation-delay: 840ms; }
+.jam-splash-dot:nth-of-type(3) { animation-delay: 920ms; }
+.jam-splash-word {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: #f5f3ee;
+  animation: jam-word-in 500ms cubic-bezier(0.22, 1, 0.36, 1) 700ms both;
+}
+@keyframes jam-bubble-in {
+  from { opacity: 0; transform: scale(0.3) rotate(-12deg); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes jam-shadow-out {
+  from { opacity: 0; transform: translate(0, 0); }
+  to { opacity: 1; transform: translate(20px, 22px); }
+}
+@keyframes jam-draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes jam-dot {
+  from { opacity: 0; transform: scale(0); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes jam-word-in {
+  from { opacity: 0; transform: translateY(10px); letter-spacing: 0.2em; }
+  to { opacity: 1; transform: none; }
+}
+@keyframes jam-logo-out {
+  to { transform: scale(1.35); opacity: 0; }
+}
+@keyframes jam-splash-out {
+  to { opacity: 0; visibility: hidden; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .jam-splash { display: none; }
+}

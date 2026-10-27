@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Providers } from "@/components/providers";
+import { Splash } from "@/components/splash";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -27,8 +28,10 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ja">
+    // suppressHydrationWarning: the splash script may add `no-splash` to <html> before React hydrates.
+    <html lang="ja" suppressHydrationWarning>
       <body>
+        <Splash />
         <Providers>{children}</Providers>
       </body>
     </html>

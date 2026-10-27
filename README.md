@@ -17,7 +17,7 @@ It is a browser app (PWA) built for iPhone first. Members open a URL; nothing ha
 ### Implemented and tested
 These were verified against a real local Supabase stack with several signed-in test users (see [Testing](#testing)).
 
-- **Look and feel:** a black-and-white, bank-app style design (light and dark), a floating translucent tab bar, and custom profile photos and group icons stored in private storage.
+- **Look and feel:** a launch animation (the Jam logo draws itself, once per session), a black-and-white, bank-app style design (light and dark), a floating translucent tab bar, and custom profile photos and group icons stored in private storage.
 - **Accounts:** Google sign-in through Supabase Auth (PKCE). Sessions persist. Signed-out users are redirected away from protected routes. A profile is created from the Google name and avatar on first sign-in.
 - **Groups:** create a group, join with an invite link or invite code, regenerate or disable invites, roles (owner / admin / member), promote and demote, transfer ownership, remove members, leave or delete a group. Group settings control whether members may invite, create polls, create events or post announcements.
 - **Chat:**
@@ -103,13 +103,13 @@ Google sign-in needs OAuth credentials, even locally; see [docs/SETUP.md](docs/S
 | `tests/integration/security.test.ts` | 28 tests: profiles, membership and roles, invites, idempotent sends, unread counts, edit and delete permissions, reactions, mention and reply notifications, DM restrictions, poll rules (single choice, answer changes, closing, anonymity, result visibility), events and attendance (visibility, deadlines, no duplicates), announcements (posting and pinning permissions, read counts), notification privacy, push subscription ownership, reminders, storage isolation and attachment validation |
 | `tests/integration/realtime.test.ts` | Realtime only delivers to members, deletions don't leak to outsiders, and only conversation members can join private typing/presence channels |
 | `tests/integration/personal-events.test.ts` | 5 tests (database only; the app no longer creates personal events): personal events are private to their owner, create no cards or notifications, and cannot be shared or moved |
-| `tests/e2e/design.mjs` | 24 browser steps: year/month wheel, パート・バンド, talk search and 固定, swipe-to-reply, round + buttons, creating an event returns to its day, floating tab bar with a jelly highlight, 意見箱 end to end (including a check that API responses never contain an author id), LINE-style home and search, calendar zoom (buttons and a real two-finger pinch), month roll and swipe, the selection circle flying to the same day of the next month, holidays, timeline, profile photo and group icon upload |
+| `tests/e2e/design.mjs` | 25 browser steps: launch animation, year/month wheel, パート・バンド, talk search and 固定, swipe-to-reply, round + buttons, creating an event returns to its day, floating tab bar with a jelly highlight, 意見箱 end to end (including a check that API responses never contain an author id), LINE-style home and search, calendar zoom (buttons and a real two-finger pinch), month roll and swipe, the selection circle flying to the same day of the next month, holidays, timeline, profile photo and group icon upload |
 | `tests/integration/feedback.test.ts` | 9 tests: authors are never exposed (members, admins, direct table access, notifications), stable aliases, permissions, moderation, cascading deletes, likes, topics, paging, rate limits |
 | `tests/integration/teams.test.ts` | 6 tests: team membership and talk rooms, team events visible / notified / counted for team members only, leave and remove rules, leaving the group, deleting a team, pinned (固定) messages |
 | `tests/integration/icons.test.ts` | 6 tests: who can upload or read profile photos and group icons |
 | `tests/e2e/journey.mjs` | 26 browser steps with 4 users (iPhone and desktop viewports), covering the full journey in the requirements, including offline send and retry, outsider access, 320px screens, history paging, dark mode, and push delivery and decryption |
 
-Latest run: **59/59 integration tests, 26/26 journey steps and 24/24 design steps passed**, along with `npm run lint`, `npm run typecheck` and `npm run build`.
+Latest run: **59/59 integration tests, 26/26 journey steps and 25/25 design steps passed**, along with `npm run lint`, `npm run typecheck` and `npm run build`.
 
 ## Project structure
 
