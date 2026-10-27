@@ -26,16 +26,18 @@ These were verified against a real local Supabase stack with several signed-in t
   - Unread counts, a 「ここから未読」 divider, and LINE-style read receipts (既読 N, plus a list of who has read).
   - Emoji reactions, replies (swipe a message left, LINE-style) with jump-to-original, @mentions, editing, deletion, image and file attachments.
   - Pinned and muted conversations, conversation search, typing indicators and online presence.
+  - Search inside a talk (results jump to the message), and 固定: one message fixed to the top of a talk for everyone.
   - Older messages load in pages without losing your scroll position.
   - 1:1 chats with anyone who shares one of your groups.
 - **Cards in chat:** polls, events/attendance requests, announcements and albums appear as live cards in the group chat. Every card points to the same database record as its full screen, so nothing is duplicated and edits show up everywhere.
+- **パート・バンド (teams):** sub-groups inside a group (a section, a band) with their own talk room and their own events. Team events are shown, notified and counted for team members only, not the rest of the group, not group admins. See [docs/SECURITY.md](docs/SECURITY.md#teams-パートバンド).
 - **意見箱 (anonymous suggestion box):** a Threads/X-style feed per group where members post feedback ("この曲のここが…") with an optional topic or song name, reply in threads, and like. Nobody can see who wrote anything, including admins; replies get stable aliases (スレ主, 匿名A, 匿名B …). Authors can delete their own posts and admins can moderate. See [docs/SECURITY.md](docs/SECURITY.md#anonymous-suggestion-box-意見箱).
 - **Polls:**
   - Single or multiple choice, optional free-text answers, anonymous voting, deadlines, and manual close or reopen.
   - You choose whether answers can be changed, and when results are visible: always, after voting, after closing, or admins only.
   - A non-respondent list for non-anonymous polls.
 - **予定 (calendar, timeline and attendance):**
-  - A month calendar with three pinch-zoom levels, a rolling month number, a selection circle that flies to the same day when you change months, Japanese public holidays, and a Structured-style day timeline with free-time gaps and a "now" line. Personal events (visible only to you, mixed into the same calendar and timeline), and event categories, all-day events, location (with a map link), an optional event image, and an attendance deadline.
+  - A month calendar with three pinch-zoom levels, a rolling month number, a selection circle that flies to the same day when you change months, Japanese public holidays, a year/month wheel (tap the month) to jump anywhere, and a Structured-style day timeline with free-time gaps and a "now" line. Personal events (visible only to you, mixed into the same calendar and timeline), and event categories, all-day events, location (with a map link), an optional event image, and an attendance deadline.
   - Attendance comments, with individual answers visible to all members or to admins only.
   - Cancel or restore events, and download an `.ics` file for the phone's calendar.
 - **Announcements:** important (重要) and pinned announcements, read tracking (既読 N/M), optional links to a poll or event, edit and delete.
@@ -101,12 +103,13 @@ Google sign-in needs OAuth credentials, even locally; see [docs/SETUP.md](docs/S
 | `tests/integration/security.test.ts` | 28 tests: profiles, membership and roles, invites, idempotent sends, unread counts, edit and delete permissions, reactions, mention and reply notifications, DM restrictions, poll rules (single choice, answer changes, closing, anonymity, result visibility), events and attendance (visibility, deadlines, no duplicates), announcements (posting and pinning permissions, read counts), notification privacy, push subscription ownership, reminders, storage isolation and attachment validation |
 | `tests/integration/realtime.test.ts` | Realtime only delivers to members, deletions don't leak to outsiders, and only conversation members can join private typing/presence channels |
 | `tests/integration/personal-events.test.ts` | 5 tests: personal events are private to their owner, create no cards or notifications, and cannot be shared or moved |
-| `tests/e2e/design.mjs` | 21 browser steps: swipe-to-reply, round + buttons, personal events, floating tab bar with a jelly highlight, 意見箱 end to end (including a check that API responses never contain an author id), LINE-style home and search, calendar zoom (buttons and a real two-finger pinch), month roll and swipe, the selection circle flying to the same day of the next month, holidays, timeline, profile photo and group icon upload |
+| `tests/e2e/design.mjs` | 24 browser steps: year/month wheel, パート・バンド, talk search and 固定, swipe-to-reply, round + buttons, personal events, floating tab bar with a jelly highlight, 意見箱 end to end (including a check that API responses never contain an author id), LINE-style home and search, calendar zoom (buttons and a real two-finger pinch), month roll and swipe, the selection circle flying to the same day of the next month, holidays, timeline, profile photo and group icon upload |
 | `tests/integration/feedback.test.ts` | 9 tests: authors are never exposed (members, admins, direct table access, notifications), stable aliases, permissions, moderation, cascading deletes, likes, topics, paging, rate limits |
+| `tests/integration/teams.test.ts` | 6 tests: team membership and talk rooms, team events visible / notified / counted for team members only, leave and remove rules, leaving the group, deleting a team, pinned (固定) messages |
 | `tests/integration/icons.test.ts` | 6 tests: who can upload or read profile photos and group icons |
 | `tests/e2e/journey.mjs` | 26 browser steps with 4 users (iPhone and desktop viewports), covering the full journey in the requirements, including offline send and retry, outsider access, 320px screens, history paging, dark mode, and push delivery and decryption |
 
-Latest run: **53/53 integration tests, 26/26 journey steps and 21/21 design steps passed**, along with `npm run lint`, `npm run typecheck` and `npm run build`.
+Latest run: **59/59 integration tests, 26/26 journey steps and 24/24 design steps passed**, along with `npm run lint`, `npm run typecheck` and `npm run build`.
 
 ## Project structure
 

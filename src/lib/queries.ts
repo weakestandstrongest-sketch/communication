@@ -31,6 +31,7 @@ export function unwrap<T>(res: { data: T | null; error: unknown }): T {
 export const qk = {
   me: ["me"] as const,
   groups: ["groups"] as const,
+  teams: ["teams"] as const,
   members: ["members"] as const,
   invite: (groupId: string) => ["invite", groupId] as const,
   conversations: ["conversations"] as const,
@@ -77,6 +78,42 @@ export function useMyGroups() {
       return (rows ?? []).filter((r) => r.group).map((r) => ({ ...r.group!, my_role: r.role }));
     },
   });
+}
+
+export type Team = { id: string; group_id: string; name: string; color: string; created_by: string | null; member_ids: string[]; mine: boolean };
+
+/** パート・バンド of all my groups (RLS: teams of groups I belong to), with their members. */
+export function useTeams() {
+  const userId = useUserId();
+  return useQuery({
+    queryKey: qk.teams,
+    enabled: Boolean(userId),
+    queryFn: async (): Promise<Team[]> => {
+      const rows = unwrap(
+        await getSupabase().from("teams").select("id, group_id, name, color, created_by, team_members(user_id)").order("created_at"),
+      );
+      return (rows ?? []).map(({ team_members, ...t }) => {
+        const member_ids = team_members.map((m) => m.user_id);
+        return { ...t, member_ids, mine: member_ids.includes(userId!) };
+      });
+    },
+  });
+}
+
+/** Label for where an event belongs: "グループ" or "グループ / パート・バンド" (null for personal events). */
+export function useEventScope() {
+  const { data: groups } = useMyGroups();
+  const { data: teams } = useTeams();
+  return useMemo(() => {
+    const g = new Map((groups ?? []).map((x) => [x.id, x]));
+    const t = new Map((teams ?? []).map((x) => [x.id, x]));
+    return (e: Pick<EventRow, "group_id" | "team_id">): { name: string; color: string } | null => {
+      const group = e.group_id ? g.get(e.group_id) : undefined;
+      if (!group) return null;
+      const team = e.team_id ? t.get(e.team_id) : undefined;
+      return team ? { name: `${group.name} / ${team.name}`, color: team.color } : { name: group.name, color: group.color };
+    };
+  }, [groups, teams]);
 }
 
 /** All members of all my groups (RLS limits rows to groups I belong to). */

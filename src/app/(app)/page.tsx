@@ -26,6 +26,7 @@ import {
   useAnnouncementReads,
   useAnnouncements,
   useConversations,
+  useEventScope,
   useEvents,
   useMyAttendance,
   useMyGroups,
@@ -44,7 +45,7 @@ import { Avatar, GroupAvatar, GroupTag } from "@/components/ui/avatar";
 import { CountBadge, Pill } from "@/components/ui/badge";
 import { Card, SectionHeader } from "@/components/ui/card";
 import { EmptyState, ListSkeleton } from "@/components/ui/empty-state";
-import { conversationTitle, lastMessagePreview } from "@/components/chat/conversation-list";
+import { ConversationAvatar, conversationTitle, lastMessagePreview } from "@/components/chat/conversation-list";
 import { NotificationIcon } from "@/components/notifications/notification-icon";
 import { cn } from "@/lib/cn";
 import { useNow } from "@/lib/use-now";
@@ -85,6 +86,7 @@ export default function HomePage() {
   const now = useNow();
 
   const groupById = useMemo(() => new Map((groups ?? []).map((g) => [g.id, g])), [groups]);
+  const scope = useEventScope();
 
   const actions = useMemo(() => {
     const items: ActionItem[] = [];
@@ -340,11 +342,7 @@ export default function HomePage() {
                     {unreadConversations.map((c) => (
                       <li key={c.id}>
                         <Link href={`/talk/${c.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-surface-2 active:bg-surface-3">
-                          {c.kind === "group" ? (
-                            <GroupAvatar name={c.group_name} color={c.group_color} icon={c.group_icon_path} size={40} />
-                          ) : (
-                            <Avatar name={c.peer_name} src={c.peer_avatar_url} id={c.peer_id} size={40} />
-                          )}
+                          <ConversationAvatar c={c} size={40} />
                           <span className="min-w-0 flex-1">
                             <span className="flex items-center gap-2">
                               <span className="truncate text-[15px] font-semibold">{conversationTitle(c)}</span>
@@ -374,7 +372,7 @@ export default function HomePage() {
                 <Card className="overflow-hidden">
                   <ul className="divide-y divide-separator">
                     {upcoming.map((e) => {
-                      const g = e.group_id ? groupById.get(e.group_id) : undefined;
+                      const g = scope(e);
                       const status = myAttendance?.get(e.id) as AttendanceStatus | undefined;
                       return (
                         <li key={e.id}>

@@ -85,7 +85,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     // 意見箱: these rows carry no author, so they are safe to publish.
     on("feedback_posts", () => invalidate(["feedback"], ["feedbackThread"], ["feedbackTopics"]));
     on("feedback_replies", () => invalidate(["feedbackThread"], ["feedback"]));
-    on("group_members", () => invalidate(qk.groups, qk.members, qk.conversations, qk.polls));
+    on("group_members", () => invalidate(qk.groups, qk.members, qk.teams, qk.conversations, qk.polls));
 
     channel
       .subscribe((status) => {

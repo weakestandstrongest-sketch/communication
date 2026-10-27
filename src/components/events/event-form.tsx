@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ImagePlus, X } from "lucide-react";
 import { getSupabase } from "@/lib/supabase/client";
-import { qk, useMyGroups } from "@/lib/queries";
+import { qk, useMyGroups, useTeams } from "@/lib/queries";
 import { errorMessage } from "@/lib/errors";
 import { fromLocalInputValue, toLocalDateInputValue, toLocalInputValue } from "@/lib/format";
 import { uploadMedia } from "@/lib/media";
@@ -27,16 +27,20 @@ function defaultStart(initialDate?: string) {
 
 export function EventForm({
   groupId: fixedGroup,
+  teamId: fixedTeam,
   event,
   initialDate,
   onDone,
 }: {
   groupId?: string;
+  /** Create the event for this パート・バンド (e.g. from its talk). */
+  teamId?: string;
   event?: EventRow;
   initialDate?: string;
   onDone: (id: string, startsAt: string) => void;
 }) {
   const { data: groups } = useMyGroups();
+  const { data: teams } = useTeams();
   const queryClient = useQueryClient();
   const toast = useToast();
   const editing = Boolean(event);
@@ -44,6 +48,7 @@ export function EventForm({
   const end0 = event?.ends_at ? new Date(event.ends_at) : new Date(start0.getTime() + 2 * 3600_000);
 
   const [groupId, setGroupId] = useState(fixedGroup ?? event?.group_id ?? (event?.personal_user_id ? PERSONAL : ""));
+  const [team, setTeam] = useState(fixedTeam ?? event?.team_id ?? "");
   const [title, setTitle] = useState(event?.title ?? "");
   const [category, setCategory] = useState<EventCategory>(event?.category ?? "practice");
   const [allDay, setAllDay] = useState(event?.all_day ?? false);
@@ -66,7 +71,13 @@ export function EventForm({
   const effectiveGroup = fixedGroup ?? groupId;
   const isPersonal = effectiveGroup === PERSONAL;
   const group = isPersonal ? undefined : groups?.find((g) => g.id === effectiveGroup);
-  const selectable = groups?.filter((g) => canCreate(g, "event")) ?? [];
+  // My パート・バンド in the chosen group. Team members may always add events to their team,
+  // even in groups where only admins create group-wide events.
+  const myTeams = isPersonal ? [] : (teams?.filter((t) => t.group_id === effectiveGroup && t.mine) ?? []);
+  const groupWide = !group || canCreate(group, "event");
+  const effectiveTeam = team || (!groupWide && !editing ? (myTeams[0]?.id ?? "") : "");
+  const teamName = teams?.find((t) => t.id === effectiveTeam)?.name;
+  const selectable = groups?.filter((g) => canCreate(g, "event") || teams?.some((t) => t.group_id === g.id && t.mine)) ?? [];
 
   const compute = () => {
     if (allDay) {
@@ -132,7 +143,12 @@ export function EventForm({
         const { error } = await getSupabase().rpc("update_event", { p_event_id: event.id, ...common, p_ends_at: endsAt as string, p_rsvp_deadline: (rsvp ? fromLocalInputValue(rsvpDeadline) : null) as string });
         if (error) throw error;
       } else {
-        const { data, error } = await getSupabase().rpc("create_event", { p_group_id: effectiveGroup, ...common, p_post_to_chat: postToChat });
+        const { data, error } = await getSupabase().rpc("create_event", {
+          p_group_id: effectiveGroup,
+          ...common,
+          p_post_to_chat: postToChat,
+          p_team_id: effectiveTeam || undefined,
+        });
         if (error) throw error;
         id = data;
       }
@@ -147,14 +163,31 @@ export function EventForm({
     }
   };
 
-  if (!editing && group && !canCreate(group, "event")) {
+  if (!editing && group && !groupWide && !myTeams.length) {
     return <p className="px-6 py-10 text-center text-[14px] text-label-3">このグループでは管理者のみ予定を作成できます。</p>;
   }
 
   return (
     <form onSubmit={submit} noValidate className="space-y-5 px-4 pt-1 pb-6">
-      {(!fixedGroup || fixedGroup === PERSONAL) && !editing && <GroupPicker value={groupId} onChange={setGroupId} groups={selectable} what="event" allowPersonal />}
+      {(!fixedGroup || fixedGroup === PERSONAL) && !editing && (
+        <GroupPicker value={groupId} onChange={(v) => (setGroupId(v), setTeam(""))} groups={selectable} what="event" allowPersonal />
+      )}
       {errors.group && <p className="-mt-3 px-1 text-[13px] text-danger">{errors.group}</p>}
+      {!editing && !fixedTeam && myTeams.length > 0 && (
+        <Field label="対象" htmlFor="event-team">
+          <Select id="event-team" value={effectiveTeam} onChange={(e) => setTeam(e.target.value)}>
+            {groupWide && <option value="">グループ全体</option>}
+            {myTeams.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}（パート・バンド）
+              </option>
+            ))}
+          </Select>
+        </Field>
+      )}
+      {effectiveTeam && teamName && (
+        <p className="-mt-2 px-1 text-[12px] leading-relaxed text-label-3">「{teamName}」のメンバーだけに表示・通知されます。</p>
+      )}
 
       <Field label="タイトル" htmlFor="event-title" error={errors.title}>
         <Input id="event-title" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} placeholder="例: 全体練習" aria-invalid={Boolean(errors.title)} data-autofocus />
@@ -260,7 +293,9 @@ export function EventForm({
       <>
       <div className="overflow-hidden rounded-[var(--radius-card)] bg-surface-2 divide-y divide-separator">
         <Switch checked={rsvp} onChange={setRsvp} label="出欠を確認する" description="メンバーに参加・不参加・未定の回答を求めます" />
-        {!editing && !fixedGroup && <Switch checked={postToChat} onChange={setPostToChat} label="グループトークに投稿" />}
+        {!editing && !fixedGroup && (
+          <Switch checked={postToChat} onChange={setPostToChat} label={effectiveTeam ? "パート・バンドのトークに投稿" : "グループトークに投稿"} />
+        )}
       </div>
 
       {rsvp && (

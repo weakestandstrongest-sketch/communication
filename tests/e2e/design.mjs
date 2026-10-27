@@ -312,7 +312,8 @@ await step("calendar header shows the year to the right of 「10月」, not abov
   await A.goto(`${APP_URL}/calendar`);
   const heading = A.getByRole("heading", { level: 2, name: new RegExp(`^${Y}年${M + 1}月$`) });
   await heading.waitFor();
-  const parts = await heading.evaluate((el) => [...el.children].map((c) => { const b = c.getBoundingClientRect(); return { text: c.textContent.trim(), left: b.left, right: b.right, bottom: b.bottom }; }));
+  // the number, 月 and the year sit inside the button that opens the year/month wheel
+  const parts = await heading.locator("button").evaluate((el) => [...el.children].map((c) => { const b = c.getBoundingClientRect(); return { text: c.textContent.trim(), left: b.left, right: b.right, bottom: b.bottom }; }));
   const [num, month, year] = parts;
   if (!(month.left >= num.right - 2 && year.left >= month.right - 2)) throw new Error(`order is wrong: ${JSON.stringify(parts)}`);
   if (Math.abs(year.bottom - month.bottom) > 6) throw new Error(`year is not on the same line as 月: ${JSON.stringify(parts)}`);
@@ -548,6 +549,91 @@ await step("swiping a message to the left starts a reply (LINE-style)", async ()
   await v("touchEnd", box.x + 60, y + 80);
   await A.waitForTimeout(400);
   if (await A.getByText("伊藤 健に返信").count()) throw new Error("a vertical drag started a reply");
+});
+
+await step("the year/month wheel jumps the calendar to the chosen month", async () => {
+  await A.goto(`${APP_URL}/calendar`);
+  await A.getByRole("button", { name: /^年月を選ぶ/ }).click();
+  const dialog = A.getByRole("dialog");
+  await dialog.getByRole("listbox", { name: "年" }).waitFor();
+  await A.waitForTimeout(400);
+  // scroll the wheels like a finger would: one year down, and to 3月
+  await dialog.getByRole("listbox", { name: "年" }).evaluate((el) => el.scrollBy({ top: 44 }));
+  await dialog.getByRole("listbox", { name: "月" }).evaluate((el) => el.scrollTo({ top: 2 * 44 }));
+  await A.waitForTimeout(600);
+  if ((await dialog.getByRole("option", { name: `${Y + 1}年`, selected: true }).count()) !== 1) throw new Error("year wheel did not select the next year");
+  await shot(A, "d23-month-wheel");
+  await dialog.getByRole("button", { name: `${Y + 1}年3月へ移動` }).click();
+  await A.getByRole("heading", { level: 2, name: `${Y + 1}年3月` }).waitFor();
+  await A.getByRole("button", { name: "今日" }).first().click();
+  await A.getByRole("heading", { level: 2, name: `${Y}年${M + 1}月` }).waitFor();
+});
+
+let teamConv = "";
+await step("パート・バンド: create one, its talk and events stay inside the team", async () => {
+  await A.goto(`${APP_URL}/groups/${groupId}`);
+  await A.getByRole("region", { name: "パート・バンド" }).getByRole("link", { name: "作成" }).click();
+  await A.getByLabel("名前").fill("サックス");
+  await shot(A, "d24-team-new");
+  await A.getByRole("button", { name: "作成する" }).click();
+  await A.waitForURL(/\/talk\/[0-9a-f-]{36}$/);
+  teamConv = A.url().split("/").pop();
+  await A.getByRole("heading", { level: 1, name: "サックス" }).waitFor();
+  const teamId = (await admin.from("teams").select("id").eq("group_id", groupId).eq("name", "サックス").single()).data.id;
+  // an event for the team, from the team page
+  await A.goto(`${APP_URL}/groups/${groupId}/teams/${teamId}`);
+  await A.getByRole("link", { name: "予定を追加" }).click();
+  await A.getByText("「サックス」のメンバーだけに表示・通知されます。").waitFor();
+  await A.getByLabel("タイトル").fill("サックスのパート練");
+  await A.getByRole("button", { name: "予定を作成" }).click();
+  await A.waitForURL(/\/calendar$/);
+  await A.getByRole("tab", { name: "サックス" }).click();
+  await A.getByText("サックスのパート練").first().waitFor();
+  await shot(A, "d25-team-event-calendar");
+  // the card went to the team talk
+  const card = await admin.from("messages").select("conversation_id").eq("kind", "event").eq("body", "サックスのパート練").single();
+  if (card.data.conversation_id !== teamConv) throw new Error("event card was not posted to the team talk");
+  // another group member sees the team exists, but not its talk or events
+  await B.goto(`${APP_URL}/groups/${groupId}`);
+  await B.getByRole("region", { name: "パート・バンド" }).getByRole("link", { name: /サックス/ }).waitFor();
+  await B.goto(`${APP_URL}/calendar`);
+  await B.getByRole("tab", { name: "タイムライン" }).click();
+  await B.getByRole("link", { name: /朝練、/ }).waitFor();
+  if (await B.getByText("サックスのパート練").count()) throw new Error("a non-member sees the team event");
+  await B.goto(`${APP_URL}/talk`);
+  await B.getByRole("link", { name: /軽音サークル/ }).first().waitFor();
+  if (await B.getByRole("link", { name: /^サックス/ }).count()) throw new Error("a non-member sees the team talk");
+});
+
+await step("talk search finds old messages and 固定 pins one to the top", async () => {
+  const conv = (await admin.from("conversations").select("id").eq("group_id", groupId).eq("kind", "group").single()).data.id;
+  await A.goto(`${APP_URL}/talk/${conv}`);
+  await A.getByRole("log").getByText("サビのテンポ速くない？").waitFor();
+  await A.getByRole("button", { name: "トーク内を検索" }).click();
+  await A.getByRole("searchbox", { name: "メッセージを検索" }).fill("テンポ");
+  const result = A.getByRole("dialog", { name: "トーク内を検索" }).getByRole("button", { name: /サビのテンポ速くない/ });
+  await result.waitFor();
+  await A.getByRole("dialog", { name: "トーク内を検索" }).locator("mark", { hasText: "テンポ" }).waitFor();
+  await shot(A, "d26-talk-search");
+  await result.click();
+  await A.getByRole("dialog", { name: "トーク内を検索" }).waitFor({ state: "detached" });
+  // LIKE wildcards are matched literally
+  await A.getByRole("button", { name: "トーク内を検索" }).click();
+  await A.getByRole("searchbox", { name: "メッセージを検索" }).fill("%");
+  await A.getByText("「%」に一致するメッセージはありません").waitFor();
+  await A.getByRole("button", { name: "検索を閉じる" }).click();
+  // 固定
+  await A.getByRole("log").getByText("サビのテンポ速くない？").click({ button: "right" });
+  await A.getByRole("button", { name: "トーク上部に固定" }).click();
+  const banner = A.getByRole("button", { name: /^固定メッセージ: サビのテンポ速くない/ });
+  await banner.waitFor();
+  await shot(A, "d27-pinned-banner");
+  // the other member sees it too (Realtime via the system message)
+  await B.goto(`${APP_URL}/talk/${conv}`);
+  await B.getByRole("button", { name: /^固定メッセージ: サビのテンポ速くない/ }).waitFor();
+  await A.getByRole("button", { name: "固定を解除" }).click();
+  await banner.waitFor({ state: "detached" });
+  await B.getByRole("button", { name: /^固定メッセージ/ }).waitFor({ state: "detached", timeout: 8000 });
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

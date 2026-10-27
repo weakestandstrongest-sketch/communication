@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { addDays, endOfMonth, endOfWeek, format, isSameDay, isSameMonth, isToday, startOfMonth, startOfWeek } from "date-fns";
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
 import { holidayName } from "@/lib/holidays";
 import { formatTime } from "@/lib/format";
 import { useSwipe } from "@/lib/use-swipe";
@@ -10,6 +10,7 @@ import { CATEGORY_COLOR, type EventRow } from "@/lib/types";
 import { IconButton } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { RollingNumber } from "./rolling-number";
+import { MonthPicker } from "./month-picker";
 
 export type ZoomLevel = 0 | 1 | 2;
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
@@ -40,6 +41,7 @@ export function MonthCalendar({
   onSelect,
   onMove,
   onToday,
+  onPick,
 }: {
   cursor: Date;
   dir: 1 | -1;
@@ -50,7 +52,10 @@ export function MonthCalendar({
   onSelect: (d: Date) => void;
   onMove: (delta: 1 | -1) => void;
   onToday: () => void;
+  /** Jump to the first day of a month chosen in the year/month wheel. */
+  onPick: (month: Date) => void;
 }) {
+  const [picking, setPicking] = useState(false);
   const start = startOfWeek(startOfMonth(cursor));
   const end = endOfWeek(endOfMonth(cursor));
   const days: Date[] = [];
@@ -185,15 +190,23 @@ export function MonthCalendar({
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-end gap-x-2 gap-y-1">
-        <div className="flex items-end gap-1.5" role="heading" aria-level={2} aria-label={format(cursor, "yyyy年M月")}>
-          <RollingNumber value={monthNumber} dir={dir} className="font-[family-name:var(--font-display)] text-[52px] font-bold tracking-tight" />
-          <span className="pb-[9px] text-[24px] leading-none font-bold" aria-hidden>
-            月
-          </span>
-          <span className="pb-[10px] pl-1 text-[15px] leading-none font-semibold text-label-3 tabular" aria-hidden>
-            {cursor.getFullYear()}年
-          </span>
-        </div>
+        <h2 className="m-0" aria-label={format(cursor, "yyyy年M月")}>
+          <button
+            type="button"
+            onClick={() => setPicking(true)}
+            aria-label={`年月を選ぶ（${format(cursor, "yyyy年M月")}）`}
+            className="flex items-end gap-1.5 rounded-2xl text-left transition-transform active:scale-[0.97]"
+          >
+            <RollingNumber value={monthNumber} dir={dir} className="font-[family-name:var(--font-display)] text-[52px] font-bold tracking-tight" />
+            <span className="pb-[9px] text-[24px] leading-none font-bold" aria-hidden>
+              月
+            </span>
+            <span className="flex items-center gap-0.5 pb-[10px] pl-1 text-[15px] leading-none font-semibold text-label-3 tabular" aria-hidden>
+              {cursor.getFullYear()}年
+              <ChevronDown className="size-4" />
+            </span>
+          </button>
+        </h2>
         <div className="ml-auto flex items-center gap-0.5 pb-1.5">
           <IconButton label="縮小" size="sm" disabled={zoom === 0} onClick={() => onZoom(Math.max(0, zoom - 1) as ZoomLevel)}>
             <ZoomOut className="size-[18px]" />
@@ -304,6 +317,7 @@ export function MonthCalendar({
         </div>
       </div>
       <p className="mt-2 px-1 text-center text-[11px] text-label-4">二本指でつまむ・広げると表示を切り替えられます</p>
+      {picking && <MonthPicker open value={cursor} onClose={() => setPicking(false)} onPick={onPick} />}
     </div>
   );
 }

@@ -16,6 +16,7 @@ import {
   Pencil,
   Pin,
   PinOff,
+  Search,
   Trash2,
   Users,
 } from "lucide-react";
@@ -35,7 +36,7 @@ import { formatAgo, formatDaySeparator } from "@/lib/format";
 import { errorMessage } from "@/lib/errors";
 import { removeMedia } from "@/lib/media";
 import type { Attachment, ConversationSummary } from "@/lib/types";
-import { Avatar, GroupAvatar } from "@/components/ui/avatar";
+import { Avatar } from "@/components/ui/avatar";
 import { ActionSheet, Sheet } from "@/components/ui/sheet";
 import { useConfirm } from "@/components/ui/confirm";
 import { useToast } from "@/components/ui/toast";
@@ -47,7 +48,8 @@ import { useMedia } from "@/lib/queries";
 import { cn } from "@/lib/cn";
 import { Composer } from "./composer";
 import { MessageItem } from "./message-item";
-import { conversationTitle } from "./conversation-list";
+import { ConversationAvatar, conversationTitle } from "./conversation-list";
+import { MessageSearch, PinnedBanner } from "./chat-tools";
 
 const QUICK_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏", "🎉", "✅"];
 const GROUP_WINDOW_MS = 5 * 60_000;
@@ -123,6 +125,7 @@ export function ChatView({ conversationId }: { conversationId: string }) {
   const [actionsFor, setActionsFor] = useState<ChatMessage | null>(null);
   const [readersFor, setReadersFor] = useState<ChatMessage | null>(null);
   const [viewer, setViewer] = useState<{ items: ViewerItem[]; index: number } | null>(null);
+  const [searching, setSearching] = useState(false);
   const [info, setInfo] = useState(false);
   const [highlight, setHighlight] = useState<string | null>(null);
   // Only messages that arrive after the screen was opened get the entrance animation.
@@ -329,7 +332,8 @@ export function ChatView({ conversationId }: { conversationId: string }) {
 
   const jumpTo = useCallback(
     async (id: string) => {
-      for (let i = 0; i < 10; i++) {
+      // Search results and the pinned message can be far back: load up to ~40 pages of history.
+      for (let i = 0; i < 40; i++) {
         const node = document.getElementById(`m-${id}`);
         if (node) {
           node.scrollIntoView({ block: "center", behavior: "smooth" });
@@ -387,6 +391,14 @@ export function ChatView({ conversationId }: { conversationId: string }) {
   );
   const onRetry = useCallback((m: ChatMessage) => retryMessage(conversationId, storagePrefix, m.client_id), [conversationId, storagePrefix]);
   const onDiscard = useCallback((m: ChatMessage) => discardMessage(conversationId, m.client_id), [conversationId]);
+
+  /** Fix a message to the top of the talk for everyone (null unfixes it). */
+  const setFixed = async (messageId: string | null) => {
+    const { error } = await getSupabase().rpc("set_pinned_message", { p_conversation_id: conversationId, p_message_id: messageId as string });
+    if (error) return toast.show(errorMessage(error), "error");
+    void queryClient.invalidateQueries({ queryKey: qk.conversations });
+    toast.show(messageId ? "トーク上部に固定しました" : "固定を解除しました");
+  };
 
   const updateMembership = async (patch: { muted?: boolean; pinned?: boolean }) => {
     const { error } = await getSupabase().from("conversation_members").update(patch).eq("conversation_id", conversationId).eq("user_id", myId);
@@ -456,15 +468,14 @@ export function ChatView({ conversationId }: { conversationId: string }) {
         subtitle={subtitle}
         typing={typingNames.length > 0}
         avatar={
-          summary &&
-          (summary.kind === "group" ? (
-            <GroupAvatar name={summary.group_name} color={summary.group_color} icon={summary.group_icon_path} size={36} />
-          ) : (
-            <Avatar name={summary.peer_name} src={summary.peer_avatar_url} id={summary.peer_id} size={36} online={onlineOthers.length > 0} />
-          ))
+          summary && <ConversationAvatar c={summary} size={36} online={onlineOthers.length > 0} />
         }
         onInfo={() => setInfo(true)}
+        onSearch={() => setSearching(true)}
       />
+      {summary?.pinned_message_id && (
+        <PinnedBanner messageId={summary.pinned_message_id} people={people} onJump={(id) => void jumpTo(id)} onUnpin={() => void setFixed(null)} />
+      )}
 
       <div
         ref={scroller}
@@ -586,6 +597,7 @@ export function ChatView({ conversationId }: { conversationId: string }) {
         conversationId={conversationId}
         storagePrefix={storagePrefix}
         groupId={groupId}
+        teamId={summary?.kind === "team" ? summary.team_id : null}
         members={memberPeople}
         myId={myId}
         replyTo={
@@ -643,6 +655,18 @@ export function ChatView({ conversationId }: { conversationId: string }) {
                       .catch(() => toast.show("コピーできませんでした", "error")),
                 },
                 {
+                  label: "トーク上部に固定",
+                  icon: <Pin />,
+                  hidden: actionsFor.kind === "system" || summary?.pinned_message_id === actionsFor.id,
+                  onSelect: () => void setFixed(actionsFor.id),
+                },
+                {
+                  label: "固定を解除",
+                  icon: <PinOff />,
+                  hidden: summary?.pinned_message_id !== actionsFor.id,
+                  onSelect: () => void setFixed(null),
+                },
+                {
                   label: "既読メンバー",
                   icon: <Eye />,
                   hidden: actionsFor.sender_id !== myId || isDirect,
@@ -690,6 +714,7 @@ export function ChatView({ conversationId }: { conversationId: string }) {
       />
 
       <ImageViewer items={viewer?.items ?? []} index={viewer ? viewer.index : null} onClose={() => setViewer(null)} />
+      {searching && <MessageSearch conversationId={conversationId} people={people} onClose={() => setSearching(false)} onJump={(id) => void jumpTo(id)} />}
     </div>
   );
 }
@@ -700,12 +725,14 @@ function ChatHeader({
   avatar,
   typing,
   onInfo,
+  onSearch,
 }: {
   title: string;
   subtitle?: string;
   avatar?: React.ReactNode;
   typing?: boolean;
   onInfo?: () => void;
+  onSearch?: () => void;
 }) {
   return (
     <header className="glass hairline-b z-20 shrink-0 pt-safe">
@@ -718,6 +745,11 @@ function ChatHeader({
           <h1 className="truncate text-[16px] leading-tight font-semibold">{title}</h1>
           {subtitle && <p className={cn("truncate text-[12px]", typing ? "text-accent" : "text-label-3")}>{subtitle}</p>}
         </div>
+        {onSearch && (
+          <button type="button" onClick={onSearch} aria-label="トーク内を検索" className="flex size-11 items-center justify-center rounded-full text-accent hover:bg-accent-soft">
+            <Search className="size-[21px]" />
+          </button>
+        )}
         {onInfo && (
           <button type="button" onClick={onInfo} aria-label="トーク情報" className="flex size-11 items-center justify-center rounded-full text-accent hover:bg-accent-soft">
             <Info className="size-[22px]" />
@@ -785,11 +817,7 @@ function ConversationInfo({
     <Sheet open={open} onClose={onClose} title="トーク情報">
       <div className="space-y-5 px-4 pb-6">
         <div className="flex flex-col items-center pt-2 text-center">
-          {summary.kind === "group" ? (
-            <GroupAvatar name={summary.group_name} color={summary.group_color} icon={summary.group_icon_path} size={72} />
-          ) : (
-            <Avatar name={summary.peer_name} src={summary.peer_avatar_url} id={summary.peer_id} size={72} />
-          )}
+          <ConversationAvatar c={summary} size={72} />
           <p className="mt-2 text-[18px] font-semibold">{conversationTitle(summary)}</p>
         </div>
         <div className="grid grid-cols-3 gap-2">
@@ -801,7 +829,12 @@ function ConversationInfo({
             {summary.pinned ? <PinOff className="size-5 text-accent" /> : <Pin className="size-5 text-accent" />}
             {summary.pinned ? "ピン解除" : "ピン留め"}
           </button>
-          {summary.group_id ? (
+          {summary.kind === "team" && summary.team_id ? (
+            <Link href={`/groups/${summary.group_id}/teams/${summary.team_id}`} onClick={onClose} className="flex flex-col items-center gap-1 rounded-2xl bg-surface-2 py-3 text-[12px] font-medium">
+              <Users className="size-5 text-accent" />
+              メンバー・設定
+            </Link>
+          ) : summary.group_id ? (
             <Link href={`/groups/${summary.group_id}`} onClick={onClose} className="flex flex-col items-center gap-1 rounded-2xl bg-surface-2 py-3 text-[12px] font-medium">
               <Users className="size-5 text-accent" />
               グループ

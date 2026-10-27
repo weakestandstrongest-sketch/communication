@@ -46,7 +46,7 @@ export function DayTimeline({
   polls: PollListItem[];
   pending: Array<{ key: string; href: string; label: string; sub: string; kind: "poll" | "event"; urgent: boolean }>;
   myAttendance: Map<string, AttendanceStatus> | undefined;
-  groupName: (groupId: string | null) => string;
+  groupName: (e: EventRow) => string;
   onSelect: (d: Date) => void;
   onMoveDay: (delta: 1 | -1) => void;
   onMoveWeek: (delta: 1 | -1) => void;
@@ -155,7 +155,7 @@ export function DayTimeline({
                 <span className="truncate">{e.location}</span>
               </span>
             )}
-            <span className="mt-0.5 block truncate text-[12px] text-label-3">{groupName(e.group_id)}</span>
+            <span className="mt-0.5 block truncate text-[12px] text-label-3">{groupName(e)}</span>
           </span>
           {e.canceled_at ? (
             <span className="shrink-0 text-[12px] font-bold text-danger">中止</span>

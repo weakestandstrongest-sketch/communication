@@ -141,14 +141,14 @@ isOneToOne: false
                   ]
                 },"conversations": {
                   Row: {
-                    "created_at": string,"direct_key": string | null,"group_id": string | null,"id": string,"kind": Database["public"]['Enums']["conversation_kind"],"last_message_at": string | null,"last_message_id": string | null
+                    "created_at": string,"direct_key": string | null,"group_id": string | null,"id": string,"kind": Database["public"]['Enums']["conversation_kind"],"last_message_at": string | null,"last_message_id": string | null,"pinned_at": string | null,"pinned_by": string | null,"pinned_message_id": string | null,"team_id": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"direct_key"?: string | null,"group_id"?: string | null,"id"?: string,"kind": Database["public"]['Enums']["conversation_kind"],"last_message_at"?: string | null,"last_message_id"?: string | null
+                    "created_at"?: string,"direct_key"?: string | null,"group_id"?: string | null,"id"?: string,"kind": Database["public"]['Enums']["conversation_kind"],"last_message_at"?: string | null,"last_message_id"?: string | null,"pinned_at"?: string | null,"pinned_by"?: string | null,"pinned_message_id"?: string | null,"team_id"?: string | null
                   }
                   Update: {
-                    "created_at"?: string,"direct_key"?: string | null,"group_id"?: string | null,"id"?: string,"kind"?: Database["public"]['Enums']["conversation_kind"],"last_message_at"?: string | null,"last_message_id"?: string | null
+                    "created_at"?: string,"direct_key"?: string | null,"group_id"?: string | null,"id"?: string,"kind"?: Database["public"]['Enums']["conversation_kind"],"last_message_at"?: string | null,"last_message_id"?: string | null,"pinned_at"?: string | null,"pinned_by"?: string | null,"pinned_message_id"?: string | null,"team_id"?: string | null
                   }
                   Relationships: [
                     {
@@ -162,6 +162,24 @@ isOneToOne: false
       columns: ["last_message_id"]
 isOneToOne: false
       referencedRelation: "messages"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "conversations_pinned_by_fkey"
+      columns: ["pinned_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "conversations_pinned_message_id_fkey"
+      columns: ["pinned_message_id"]
+isOneToOne: false
+      referencedRelation: "messages"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "conversations_team_id_fkey"
+      columns: ["team_id"]
+isOneToOne: false
+      referencedRelation: "teams"
       referencedColumns: ["id"]
     }
                   ]
@@ -193,14 +211,14 @@ isOneToOne: false
                   ]
                 },"events": {
                   Row: {
-                    "all_day": boolean,"attendance_visibility": string,"canceled_at": string | null,"category": Database["public"]['Enums']["event_category"],"created_at": string,"created_by": string | null,"description": string,"ends_at": string | null,"going_count": number,"group_id": string | null,"id": string,"image_path": string | null,"location": string,"maybe_count": number,"not_going_count": number,"personal_user_id": string | null,"rsvp_deadline": string | null,"rsvp_enabled": boolean,"starts_at": string,"title": string,"updated_at": string
+                    "all_day": boolean,"attendance_visibility": string,"canceled_at": string | null,"category": Database["public"]['Enums']["event_category"],"created_at": string,"created_by": string | null,"description": string,"ends_at": string | null,"going_count": number,"group_id": string | null,"id": string,"image_path": string | null,"location": string,"maybe_count": number,"not_going_count": number,"personal_user_id": string | null,"rsvp_deadline": string | null,"rsvp_enabled": boolean,"starts_at": string,"team_id": string | null,"title": string,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "all_day"?: boolean,"attendance_visibility"?: string,"canceled_at"?: string | null,"category"?: Database["public"]['Enums']["event_category"],"created_at"?: string,"created_by"?: string | null,"description"?: string,"ends_at"?: string | null,"going_count"?: number,"group_id"?: string | null,"id"?: string,"image_path"?: string | null,"location"?: string,"maybe_count"?: number,"not_going_count"?: number,"personal_user_id"?: string | null,"rsvp_deadline"?: string | null,"rsvp_enabled"?: boolean,"starts_at": string,"title": string,"updated_at"?: string
+                    "all_day"?: boolean,"attendance_visibility"?: string,"canceled_at"?: string | null,"category"?: Database["public"]['Enums']["event_category"],"created_at"?: string,"created_by"?: string | null,"description"?: string,"ends_at"?: string | null,"going_count"?: number,"group_id"?: string | null,"id"?: string,"image_path"?: string | null,"location"?: string,"maybe_count"?: number,"not_going_count"?: number,"personal_user_id"?: string | null,"rsvp_deadline"?: string | null,"rsvp_enabled"?: boolean,"starts_at": string,"team_id"?: string | null,"title": string,"updated_at"?: string
                   }
                   Update: {
-                    "all_day"?: boolean,"attendance_visibility"?: string,"canceled_at"?: string | null,"category"?: Database["public"]['Enums']["event_category"],"created_at"?: string,"created_by"?: string | null,"description"?: string,"ends_at"?: string | null,"going_count"?: number,"group_id"?: string | null,"id"?: string,"image_path"?: string | null,"location"?: string,"maybe_count"?: number,"not_going_count"?: number,"personal_user_id"?: string | null,"rsvp_deadline"?: string | null,"rsvp_enabled"?: boolean,"starts_at"?: string,"title"?: string,"updated_at"?: string
+                    "all_day"?: boolean,"attendance_visibility"?: string,"canceled_at"?: string | null,"category"?: Database["public"]['Enums']["event_category"],"created_at"?: string,"created_by"?: string | null,"description"?: string,"ends_at"?: string | null,"going_count"?: number,"group_id"?: string | null,"id"?: string,"image_path"?: string | null,"location"?: string,"maybe_count"?: number,"not_going_count"?: number,"personal_user_id"?: string | null,"rsvp_deadline"?: string | null,"rsvp_enabled"?: boolean,"starts_at"?: string,"team_id"?: string | null,"title"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -220,6 +238,12 @@ isOneToOne: false
       columns: ["personal_user_id"]
 isOneToOne: false
       referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "events_team_id_fkey"
+      columns: ["team_id"]
+isOneToOne: false
+      referencedRelation: "teams"
       referencedColumns: ["id"]
     }
                   ]
@@ -657,6 +681,58 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"team_members": {
+                  Row: {
+                    "created_at": string,"group_id": string,"team_id": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"group_id": string,"team_id": string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"group_id"?: string,"team_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "team_members_group_id_user_id_fkey"
+      columns: ["group_id","user_id"]
+isOneToOne: false
+      referencedRelation: "group_members"
+      referencedColumns: ["group_id","user_id"]
+    },{
+      foreignKeyName: "team_members_team_id_fkey"
+      columns: ["team_id"]
+isOneToOne: false
+      referencedRelation: "teams"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"teams": {
+                  Row: {
+                    "color": string,"created_at": string,"created_by": string | null,"group_id": string,"id": string,"name": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "color"?: string,"created_at"?: string,"created_by"?: string | null,"group_id": string,"id"?: string,"name": string
+                  }
+                  Update: {
+                    "color"?: string,"created_at"?: string,"created_by"?: string | null,"group_id"?: string,"id"?: string,"name"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "teams_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "teams_group_id_fkey"
+      columns: ["group_id"]
+isOneToOne: false
+      referencedRelation: "groups"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"user_settings": {
                   Row: {
                     "push_preview": boolean,"updated_at": string,"user_id": string
@@ -683,7 +759,10 @@ isOneToOne: true
             [_ in never]: never
           }
           Functions: {
-            "can_access_media_path":
+            "add_team_members":
+{ Args: { "p_team_id": string,"p_user_ids": (string)[] }; Returns: number
+                           },
+"can_access_media_path":
 { Args: { "p_name": string }; Returns: boolean
                            },
 "can_delete_media_path":
@@ -702,7 +781,7 @@ isOneToOne: true
 { Args: { "p_body": string,"p_event_id"?: string,"p_group_id": string,"p_important"?: boolean,"p_pinned"?: boolean,"p_poll_id"?: string,"p_post_to_chat"?: boolean,"p_title": string }; Returns: string
                            },
 "create_event":
-{ Args: { "p_all_day"?: boolean,"p_attendance_visibility"?: string,"p_category"?: Database["public"]['Enums']["event_category"],"p_description"?: string,"p_ends_at"?: string,"p_group_id": string,"p_image_path"?: string,"p_location"?: string,"p_post_to_chat"?: boolean,"p_rsvp_deadline"?: string,"p_rsvp_enabled"?: boolean,"p_starts_at": string,"p_title": string }; Returns: string
+{ Args: { "p_all_day"?: boolean,"p_attendance_visibility"?: string,"p_category"?: Database["public"]['Enums']["event_category"],"p_description"?: string,"p_ends_at"?: string,"p_group_id": string,"p_image_path"?: string,"p_location"?: string,"p_post_to_chat"?: boolean,"p_rsvp_deadline"?: string,"p_rsvp_enabled"?: boolean,"p_starts_at": string,"p_team_id"?: string,"p_title": string }; Returns: string
                            },
 "create_feedback_post":
 { Args: { "p_body": string,"p_group_id": string,"p_topic"?: string }; Returns: string
@@ -719,11 +798,17 @@ isOneToOne: true
 "create_poll":
 { Args: { "p_allow_change"?: boolean,"p_allow_free_text"?: boolean,"p_anonymous"?: boolean,"p_deadline"?: string,"p_description"?: string,"p_group_id": string,"p_multiple"?: boolean,"p_options": (string)[],"p_post_to_chat"?: boolean,"p_result_visibility"?: Database["public"]['Enums']["poll_result_visibility"],"p_title": string }; Returns: string
                            },
+"create_team":
+{ Args: { "p_color"?: string,"p_group_id": string,"p_member_ids"?: (string)[],"p_name": string }; Returns: string
+                           },
 "delete_feedback":
 { Args: { "p_id": string,"p_kind": string }; Returns: undefined
                            },
 "delete_message":
 { Args: { "p_message_id": string }; Returns: (string)[]
+                           },
+"delete_team":
+{ Args: { "p_team_id": string }; Returns: undefined
                            },
 "edit_message":
 { Args: { "p_body": string,"p_message_id": string }; Returns: {
@@ -767,7 +852,7 @@ isOneToOne: true
                            },
 "get_conversations":
 { Args: Record<PropertyKey, never>; Returns: {
-              "group_color": string,"group_icon_path": string,"group_id": string,"group_name": string,"id": string,"kind": Database["public"]['Enums']["conversation_kind"],"last_message_at": string,"last_message_body": string,"last_message_deleted": boolean,"last_message_kind": Database["public"]['Enums']["message_kind"],"last_message_sender_id": string,"last_message_sender_name": string,"last_read_at": string,"member_count": number,"mention_count": number,"muted": boolean,"peer_avatar_url": string,"peer_id": string,"peer_name": string,"pinned": boolean,"unread_count": number
+              "group_color": string,"group_icon_path": string,"group_id": string,"group_name": string,"id": string,"kind": Database["public"]['Enums']["conversation_kind"],"last_message_at": string,"last_message_body": string,"last_message_deleted": boolean,"last_message_kind": Database["public"]['Enums']["message_kind"],"last_message_sender_id": string,"last_message_sender_name": string,"last_read_at": string,"member_count": number,"mention_count": number,"muted": boolean,"peer_avatar_url": string,"peer_id": string,"peer_name": string,"pinned": boolean,"pinned_message_id": string,"team_color": string,"team_id": string,"team_name": string,"unread_count": number
             }[]
                            },
 "get_event_attendance":
@@ -793,6 +878,9 @@ isOneToOne: true
                            },
 "is_group_member":
 { Args: { "p_group_id": string }; Returns: boolean
+                           },
+"is_team_member":
+{ Args: { "p_team_id": string }; Returns: boolean
                            },
 "join_group":
 { Args: { "p_code": string }; Returns: string
@@ -832,6 +920,9 @@ isOneToOne: true
                            },
 "remove_member":
 { Args: { "p_group_id": string,"p_user_id": string }; Returns: undefined
+                           },
+"remove_team_member":
+{ Args: { "p_team_id": string,"p_user_id": string }; Returns: undefined
                            },
 "retract_poll_response":
 { Args: { "p_poll_id": string }; Returns: undefined
@@ -874,6 +965,9 @@ isOneToOne: true
 "set_member_role":
 { Args: { "p_group_id": string,"p_role": Database["public"]['Enums']["group_role"],"p_user_id": string }; Returns: undefined
                            },
+"set_pinned_message":
+{ Args: { "p_conversation_id": string,"p_message_id": string }; Returns: undefined
+                           },
 "set_poll_closed":
 { Args: { "p_closed": boolean,"p_poll_id": string }; Returns: undefined
                            },
@@ -897,10 +991,13 @@ isOneToOne: true
                            },
 "update_poll":
 { Args: { "p_deadline": string,"p_description": string,"p_poll_id": string,"p_title": string }; Returns: undefined
+                           },
+"update_team":
+{ Args: { "p_color"?: string,"p_name": string,"p_team_id": string }; Returns: undefined
                            }
           }
           Enums: {
-            "attendance_status": "going"|"not_going"|"maybe","conversation_kind": "group"|"direct","event_category": "practice"|"match"|"meeting"|"social"|"trip"|"other","group_role": "owner"|"admin"|"member","message_kind": "text"|"image"|"file"|"poll"|"event"|"announcement"|"album"|"system","poll_result_visibility": "always"|"after_vote"|"after_close"|"admins"
+            "attendance_status": "going"|"not_going"|"maybe","conversation_kind": "group"|"direct"|"team","event_category": "practice"|"match"|"meeting"|"social"|"trip"|"other","group_role": "owner"|"admin"|"member","message_kind": "text"|"image"|"file"|"poll"|"event"|"announcement"|"album"|"system","poll_result_visibility": "always"|"after_vote"|"after_close"|"admins"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -1020,7 +1117,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "attendance_status": ["going", "not_going", "maybe"],"conversation_kind": ["group", "direct"],"event_category": ["practice", "match", "meeting", "social", "trip", "other"],"group_role": ["owner", "admin", "member"],"message_kind": ["text", "image", "file", "poll", "event", "announcement", "album", "system"],"poll_result_visibility": ["always", "after_vote", "after_close", "admins"]
+            "attendance_status": ["going", "not_going", "maybe"],"conversation_kind": ["group", "direct", "team"],"event_category": ["practice", "match", "meeting", "social", "trip", "other"],"group_role": ["owner", "admin", "member"],"message_kind": ["text", "image", "file", "poll", "event", "announcement", "album", "system"],"poll_result_visibility": ["always", "after_vote", "after_close", "admins"]
           }
         }
 } as const

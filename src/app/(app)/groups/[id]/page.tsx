@@ -48,6 +48,7 @@ import { useConfirm } from "@/components/ui/confirm";
 import { useToast } from "@/components/ui/toast";
 import { SignedImage } from "@/components/media/signed-image";
 import { canCreate } from "@/components/polls/poll-form";
+import { TeamsSection } from "@/components/teams/teams-section";
 import { cn } from "@/lib/cn";
 
 type Tab = "announcements" | "members" | "albums";
@@ -127,6 +128,8 @@ function GroupDetail() {
             </Link>
           </div>
         </Card>
+
+        <TeamsSection groupId={id} />
 
         <Segmented
           label="グループの表示"

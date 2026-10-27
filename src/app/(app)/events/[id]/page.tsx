@@ -7,7 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Ban, CalendarPlus, Clock, Lock, MapPin, MoreHorizontal, Pencil, RotateCcw, Share2, Trash2 } from "lucide-react";
 import { getSupabase } from "@/lib/supabase/client";
 import { useUserId } from "@/lib/auth";
-import { qk, useAttendance, useEvent, useMyGroups, usePeople } from "@/lib/queries";
+import { qk, useAttendance, useEvent, useEventScope, useMyGroups, usePeople } from "@/lib/queries";
 import { errorMessage } from "@/lib/errors";
 import { formatDateTime, formatEventRange, relativeDay } from "@/lib/format";
 import { removeMedia } from "@/lib/media";
@@ -38,6 +38,7 @@ export default function EventDetailPage() {
   const { data: event, isLoading } = useEvent(id);
   const { data: attendance } = useAttendance(event && !event.personal_user_id ? id : null);
   const { data: groups } = useMyGroups();
+  const scope = useEventScope();
   const [menu, setMenu] = useState(false);
   const [comment, setComment] = useState<string | null>(null);
   const [tab, setTab] = useState<AttendanceStatus | "none">("going");
@@ -54,6 +55,7 @@ export default function EventDetailPage() {
 
   const isPersonal = Boolean(event.personal_user_id);
   const group = event.group_id ? groups?.find((g) => g.id === event.group_id) : undefined;
+  const scopeTag = scope(event);
   const canManage = isPersonal ? event.personal_user_id === myId : event.created_by === myId || group?.my_role === "owner" || group?.my_role === "admin";
   const organizer = event.created_by ? people.get(event.created_by) : undefined;
   const closedReason = attendanceClosedReason(event);
@@ -132,7 +134,7 @@ export default function EventDetailPage() {
           {event.image_path && <SignedImage path={event.image_path} className="aspect-[2/1] w-full" />}
           <div className="px-4 py-4">
             <div className="flex flex-wrap items-center gap-2">
-              {group && <GroupTag name={group.name} color={group.color} />}
+              {scopeTag && <GroupTag name={scopeTag.name} color={scopeTag.color} />}
               {isPersonal && (
                 <span className="inline-flex items-center gap-1 text-[12px] font-medium text-label-2">
                   <Lock className="size-3" aria-hidden />

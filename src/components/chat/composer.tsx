@@ -23,6 +23,8 @@ type Props = {
   conversationId: string;
   storagePrefix: string;
   groupId: string | null;
+  /** In a パート・バンド talk: events are created for the team; polls and announcements belong to the whole group. */
+  teamId?: string | null;
   members: PersonInfo[];
   myId: string;
   replyTo: { message: ChatMessage; senderName: string } | null;
@@ -313,9 +315,9 @@ export function Composer(props: Props) {
         actions={[
           { label: "写真", icon: <ImagePlus />, onSelect: () => photoInput.current?.click() },
           { label: "ファイル", icon: <FileUp />, onSelect: () => fileInput.current?.click() },
-          { label: "投票を作成", icon: <Vote />, onSelect: () => setCreate("poll"), hidden: !props.groupId },
+          { label: "投票を作成", icon: <Vote />, onSelect: () => setCreate("poll"), hidden: !props.groupId || Boolean(props.teamId) },
           { label: "予定・出欠確認を作成", icon: <CalendarPlus />, onSelect: () => setCreate("event"), hidden: !props.groupId },
-          { label: "お知らせを投稿", icon: <Megaphone />, onSelect: () => setCreate("announcement"), hidden: !props.groupId },
+          { label: "お知らせを投稿", icon: <Megaphone />, onSelect: () => setCreate("announcement"), hidden: !props.groupId || Boolean(props.teamId) },
         ]}
       />
 
@@ -325,7 +327,7 @@ export function Composer(props: Props) {
             <PollForm groupId={props.groupId} onDone={() => (setCreate(null), props.onSent())} />
           </Sheet>
           <Sheet open={create === "event"} onClose={() => setCreate(null)} title="予定を作成" size="lg">
-            <EventForm groupId={props.groupId} onDone={() => (setCreate(null), props.onSent())} />
+            <EventForm groupId={props.groupId} teamId={props.teamId ?? undefined} onDone={() => (setCreate(null), props.onSent())} />
           </Sheet>
           <Sheet open={create === "announcement"} onClose={() => setCreate(null)} title="お知らせを投稿" size="lg">
             <AnnouncementForm groupId={props.groupId} onDone={() => (setCreate(null), props.onSent())} />

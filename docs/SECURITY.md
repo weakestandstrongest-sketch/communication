@@ -34,6 +34,14 @@
 
 These rules are covered by `tests/integration/security.test.ts`, which uses four real users (owner, admin, member and outsider) and tries the forbidden operations directly against the API, not through the UI.
 
+## Teams (パート・バンド)
+
+- A team belongs to a group; `team_members` references `group_members`, so leaving or being removed from the group also removes the person from its teams (and from the team talk, through a trigger).
+- Any group member can see which teams exist and who is in them (like the member list). Only team members are in the team's talk room (`conversation_members`), so only they can read it, receive it through Realtime, or reach its storage paths.
+- Events with a `team_id` are readable only by team members (RLS on `events`), not by other group members and not by group admins. Attendance, `get_event_attendance`, `share_to_chat`, notifications and reminders are all limited to team members. Group admins can still delete a team (moderation).
+- Teams are created and changed only through `create_team`, `update_team`, `add_team_members` (team members or group admins; only people in the group are added), `remove_team_member` (anyone can leave; removing others is for the team's creator and group admins) and `delete_team` (creator or group admin).
+- Pinned (固定) messages: any member of a talk can fix one of its messages to the top (`set_pinned_message`); a deleted message is unpinned automatically.
+
 ## Anonymous suggestion box (意見箱)
 
 - `feedback_posts` and `feedback_replies` have **no author column**. Authors, per-thread aliases and likes live in tables in the `private` schema, which the API cannot reach; only SECURITY DEFINER functions read them, and they return a `mine` flag instead of an author id. The tables are published to Realtime for live updates, and their rows identify nobody.

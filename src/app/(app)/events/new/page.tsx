@@ -11,9 +11,10 @@ function NewEvent() {
   const params = useSearchParams();
   const groupId = params.get("group") ?? undefined;
   const date = params.get("date") ?? undefined;
+  const teamId = params.get("team") ?? undefined;
   return (
     <div className="mx-auto max-w-2xl pt-4 pb-10">
-      <EventForm key={`${groupId}-${date}`} groupId={groupId} initialDate={date} onDone={(_id, startsAt) => router.replace(`/calendar?date=${toLocalDateInputValue(new Date(startsAt))}`)} />
+      <EventForm key={`${groupId}-${teamId}-${date}`} groupId={groupId} teamId={teamId} initialDate={date} onDone={(_id, startsAt) => router.replace(`/calendar?date=${toLocalDateInputValue(new Date(startsAt))}`)} />
     </div>
   );
 }

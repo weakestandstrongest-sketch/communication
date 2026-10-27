@@ -133,7 +133,7 @@ export async function dispatchMessage(admin: Admin, messageId: string) {
   const { data: m } = await admin.from("messages").select("*").eq("id", messageId).maybeSingle();
   if (!m || m.deleted_at || !m.sender_id) return { sent: 0, failed: 0, removed: 0 };
   const [{ data: conv }, { data: members }, { data: sender }] = await Promise.all([
-    admin.from("conversations").select("id, kind, group_id, groups(name)").eq("id", m.conversation_id).single(),
+    admin.from("conversations").select("id, kind, group_id, groups(name), teams(name)").eq("id", m.conversation_id).single(),
     admin.from("conversation_members").select("user_id, muted, last_read_at").eq("conversation_id", m.conversation_id),
     admin.from("profiles").select("display_name").eq("id", m.sender_id).single(),
   ]);
@@ -147,7 +147,9 @@ export async function dispatchMessage(admin: Admin, messageId: string) {
   const recipients = members.filter((x) => x.user_id !== m.sender_id);
   const { prefMap, preview } = await loadPrefs(admin, recipients.map((r) => r.user_id));
   const senderName = sender?.display_name ?? "メンバー";
+  const teamName = (conv.teams as { name: string } | null)?.name ?? null;
   const groupName = (conv.groups as { name: string } | null)?.name ?? null;
+  const isGroupLike = conv.kind === "group" || conv.kind === "team";
   const text =
     m.kind === "image" ? (m.body ? `📷 ${m.body}` : "写真を送信しました") : m.kind === "file" ? (m.body ? `📎 ${m.body}` : "ファイルを送信しました") : m.body;
   const now = Date.now();
@@ -169,9 +171,9 @@ export async function dispatchMessage(admin: Admin, messageId: string) {
       {
         userId: r.user_id,
         payload: {
-          title: conv.kind === "group" ? (groupName ?? "グループ") : senderName,
+          title: conv.kind === "team" ? `${teamName ?? "パート・バンド"}（${groupName ?? "グループ"}）` : conv.kind === "group" ? (groupName ?? "グループ") : senderName,
           body: showBody
-            ? `${conv.kind === "group" ? `${senderName}: ` : ""}${prefix}${text}`.slice(0, 180)
+            ? `${isGroupLike ? `${senderName}: ` : ""}${prefix}${text}`.slice(0, 180)
             : direct
               ? `${senderName}さんからメッセージがあります`
               : "新しいメッセージがあります",

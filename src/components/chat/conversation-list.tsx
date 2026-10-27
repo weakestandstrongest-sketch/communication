@@ -21,8 +21,16 @@ import { cn } from "@/lib/cn";
 import { NewDirectSheet } from "./new-direct-sheet";
 import { LongPressLink } from "@/components/ui/long-press";
 
-export function conversationTitle(c: Pick<ConversationSummary, "kind" | "group_name" | "peer_name">) {
+export function conversationTitle(c: Pick<ConversationSummary, "kind" | "group_name" | "team_name" | "peer_name">) {
+  if (c.kind === "team") return c.team_name ?? "パート・バンド";
   return c.kind === "group" ? (c.group_name ?? "グループ") : (c.peer_name ?? "トーク");
+}
+
+/** Group icon, パート・バンド badge (team colour) or the other person's photo. */
+export function ConversationAvatar({ c, size, online }: { c: ConversationSummary; size: 36 | 40 | 52 | 72; online?: boolean }) {
+  if (c.kind === "group") return <GroupAvatar name={c.group_name} color={c.group_color} icon={c.group_icon_path} size={size} />;
+  if (c.kind === "team") return <GroupAvatar name={c.team_name} color={c.team_color} size={size} />;
+  return <Avatar name={c.peer_name} src={c.peer_avatar_url} id={c.peer_id} size={size} online={online} />;
 }
 
 export function lastMessagePreview(c: ConversationSummary, myId: string, people: Map<string, { name: string }>) {
@@ -141,15 +149,12 @@ export function ConversationList() {
                   )}
                   aria-label={`${conversationTitle(c)}${unread ? `、未読${unread}件` : ""}`}
                 >
-                  {c.kind === "group" ? (
-                    <GroupAvatar name={c.group_name} color={c.group_color} icon={c.group_icon_path} size={52} />
-                  ) : (
-                    <Avatar name={c.peer_name} src={c.peer_avatar_url} id={c.peer_id} size={52} />
-                  )}
+                  <ConversationAvatar c={c} size={52} />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
                       <span className="truncate text-[16px] font-semibold">{conversationTitle(c)}</span>
-                      {c.kind === "group" && <span className="shrink-0 text-[13px] text-label-3 tabular">{Number(c.member_count)}</span>}
+                      {c.kind !== "direct" && <span className="shrink-0 text-[13px] text-label-3 tabular">{Number(c.member_count)}</span>}
+                      {c.kind === "team" && <span className="min-w-0 truncate text-[12px] text-label-3">{c.group_name}</span>}
                       {c.pinned && <Pin className="size-3.5 shrink-0 rotate-45 text-label-3" aria-label="ピン留め" />}
                       {c.muted && <BellOff className="size-3.5 shrink-0 text-label-3" aria-label="通知オフ" />}
                       <span className="ml-auto shrink-0 pl-2 text-[12px] text-label-3 tabular">

@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { addDays, addMonths, addWeeks, differenceInCalendarMonths, format, isValid, parseISO, startOfDay } from "date-fns";
+import { addDays, addMonths, addWeeks, differenceInCalendarMonths, format, getDaysInMonth, isValid, parseISO, startOfDay } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Lock, MapPin, Plus } from "lucide-react";
-import { isPollClosed, needsAttendance, useEvents, useMyAttendance, useMyGroups, usePolls } from "@/lib/queries";
+import { isPollClosed, needsAttendance, useEventScope, useEvents, useMyAttendance, useMyGroups, usePolls, useTeams } from "@/lib/queries";
 import { errorMessage } from "@/lib/errors";
 import { formatTime, toLocalDateInputValue } from "@/lib/format";
 import { holidayName } from "@/lib/holidays";
@@ -65,6 +65,8 @@ function CalendarView() {
   const params = useSearchParams();
   const { data: events, isLoading, error, refetch } = useEvents();
   const { data: groups } = useMyGroups();
+  const { data: teams } = useTeams();
+  const scope = useEventScope();
   const { data: mine } = useMyAttendance();
   const { data: polls } = usePolls();
   const now = useNow();
@@ -96,9 +98,11 @@ function CalendarView() {
     if (dateParam) router.replace("/calendar", { scroll: false });
   }, [dateParam, router]);
 
-  const groupById = useMemo(() => new Map((groups ?? []).map((g) => [g.id, g])), [groups]);
   const filtered = useMemo(
-    () => (events ?? []).filter((e) => (group === "all" ? true : group === "personal" ? Boolean(e.personal_user_id) : e.group_id === group)),
+    () =>
+      (events ?? []).filter((e) =>
+        group === "all" ? true : group === "personal" ? Boolean(e.personal_user_id) : group.startsWith("team:") ? e.team_id === group.slice(5) : e.group_id === group,
+      ),
     [events, group],
   );
   const byDay = useMemo(() => {
@@ -141,6 +145,14 @@ function CalendarView() {
     // The selection moves to the same day of the next/previous month (clamped to the month's end).
     const next = addMonths(selected, delta);
     setDir(delta);
+    setCursor(next);
+    setSelected(next);
+  };
+  const pickMonth = (month: Date) => {
+    // Keep the selected day number, clamped to the month's length (31日 → 2月28日).
+    const next = new Date(month.getFullYear(), month.getMonth(), Math.min(selected.getDate(), getDaysInMonth(month)));
+    if (differenceInCalendarMonths(next, cursor) === 0) return;
+    setDir(differenceInCalendarMonths(next, cursor) > 0 ? 1 : -1);
     setCursor(next);
     setSelected(next);
   };
@@ -191,7 +203,13 @@ function CalendarView() {
         />
         {groups && (
           <div className="scrollbar-none -mx-4 flex gap-1.5 overflow-x-auto px-4" role="tablist" aria-label="絞り込み">
-            {[{ id: "all", name: "すべて" }, ...groups, { id: "personal", name: "個人" }].map((g) => (
+            {[
+              { id: "all", name: "すべて" },
+              ...groups,
+              // My パート・バンド get their own chips, after the groups.
+              ...(teams ?? []).filter((t) => t.mine).map((t) => ({ id: `team:${t.id}`, name: t.name })),
+              { id: "personal", name: "個人" },
+            ].map((g) => (
               <button
                 key={g.id}
                 type="button"
@@ -212,7 +230,7 @@ function CalendarView() {
           <ErrorState message={errorMessage(error)} onRetry={() => refetch()} />
         ) : mode === "calendar" ? (
           <>
-            <MonthCalendar cursor={cursor} dir={dir} zoom={zoom} selected={selected} byDay={byDay} onZoom={setZoom} onSelect={selectDay} onMove={moveMonth} onToday={goToday} />
+            <MonthCalendar cursor={cursor} dir={dir} zoom={zoom} selected={selected} byDay={byDay} onZoom={setZoom} onSelect={selectDay} onMove={moveMonth} onToday={goToday} onPick={pickMonth} />
             <section aria-label={`${format(selected, "M月d日")}の予定`}>
               <div className="mb-2 flex items-baseline gap-2 px-1">
                 <h3 className="text-[18px] font-bold">{format(selected, "M月d日(E)", { locale: ja })}</h3>
@@ -231,7 +249,7 @@ function CalendarView() {
               ) : (
                 <ul className="space-y-2">
                   {selectedEvents.map((e) => (
-                    <DayRow key={e.id} event={e} group={e.group_id ? groupById.get(e.group_id) : undefined} status={mine?.get(e.id) as AttendanceStatus | undefined} />
+                    <DayRow key={e.id} event={e} group={scope(e) ?? undefined} status={mine?.get(e.id) as AttendanceStatus | undefined} />
                   ))}
                 </ul>
               )}
@@ -245,7 +263,7 @@ function CalendarView() {
             polls={openPolls}
             pending={pending}
             myAttendance={mine as Map<string, AttendanceStatus> | undefined}
-            groupName={(id) => (id ? (groupById.get(id)?.name ?? "") : "個人の予定")}
+            groupName={(e) => scope(e)?.name ?? (e.personal_user_id ? "個人の予定" : "")}
             onSelect={selectDay}
             onMoveDay={moveDay}
             onMoveWeek={moveWeek}
