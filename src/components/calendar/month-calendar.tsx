@@ -256,9 +256,12 @@ export function MonthCalendar({
                     data-sel={sel ? "" : undefined}
                     className={cn(
                       "flex size-7 items-center justify-center rounded-full text-[14px] tabular transition-colors duration-150",
-                      today ? "bg-danger font-bold text-white" : red ? "text-danger" : "",
-                      sel && "bg-label font-bold text-bg data-flying:bg-transparent data-flying:text-[inherit] data-flying:duration-0",
-                      sel && today && "ring-2 ring-danger ring-offset-1 ring-offset-surface data-flying:bg-danger data-flying:text-white data-flying:ring-0",
+                      // Selected and today styles are exclusive: both set a text color, and the stylesheet order (not the class order) would pick one.
+                      !sel && (today ? "bg-danger font-bold text-white" : red ? "text-danger" : ""),
+                      sel && "bg-label font-bold text-bg data-flying:duration-0",
+                      sel && (today
+                        ? "ring-2 ring-danger ring-offset-1 ring-offset-surface data-flying:bg-danger data-flying:text-white data-flying:ring-0"
+                        : red ? "data-flying:bg-transparent data-flying:text-danger" : "data-flying:bg-transparent data-flying:text-label"),
                     )}
                   >
                     {d.getDate()}

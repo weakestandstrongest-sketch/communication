@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { addDays, addMonths, addWeeks, differenceInCalendarMonths, format, startOfDay } from "date-fns";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { addDays, addMonths, addWeeks, differenceInCalendarMonths, format, isValid, parseISO, startOfDay } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Lock, MapPin, Plus } from "lucide-react";
 import { isPollClosed, needsAttendance, useEvents, useMyAttendance, useMyGroups, usePolls } from "@/lib/queries";
@@ -53,7 +53,16 @@ function freeMinutes(day: Date, events: EventRow[]) {
 }
 
 export default function CalendarPage() {
+  return (
+    <Suspense>
+      <CalendarView />
+    </Suspense>
+  );
+}
+
+function CalendarView() {
   const router = useRouter();
+  const params = useSearchParams();
   const { data: events, isLoading, error, refetch } = useEvents();
   const { data: groups } = useMyGroups();
   const { data: mine } = useMyAttendance();
@@ -65,6 +74,27 @@ export default function CalendarPage() {
   const [selected, setSelected] = useState(() => startOfDay(new Date()));
   const [dir, setDir] = useState<1 | -1>(1);
   const [group, setGroup] = useState("all");
+
+  // `/calendar?date=2026-10-27` (e.g. right after creating an event) opens the calendar on that day.
+  // The route stays mounted between visits, so react to the parameter changing, not only to the first render.
+  const dateParam = params.get("date");
+  const [seenDate, setSeenDate] = useState<string | null>(null);
+  if (dateParam && dateParam !== seenDate) {
+    setSeenDate(dateParam);
+    const d = parseISO(dateParam);
+    if (isValid(d)) {
+      setMode("calendar");
+      setDir(differenceInCalendarMonths(d, cursor) >= 0 ? 1 : -1);
+      setCursor(d);
+      setSelected(startOfDay(d));
+    }
+  } else if (!dateParam && seenDate) {
+    setSeenDate(null);
+  }
+  // Drop the parameter once applied, so creating another event on the same day jumps there again.
+  useEffect(() => {
+    if (dateParam) router.replace("/calendar", { scroll: false });
+  }, [dateParam, router]);
 
   const groupById = useMemo(() => new Map((groups ?? []).map((g) => [g.id, g])), [groups]);
   const filtered = useMemo(

@@ -34,7 +34,7 @@ export function EventForm({
   groupId?: string;
   event?: EventRow;
   initialDate?: string;
-  onDone: (id: string) => void;
+  onDone: (id: string, startsAt: string) => void;
 }) {
   const { data: groups } = useMyGroups();
   const queryClient = useQueryClient();
@@ -139,7 +139,7 @@ export function EventForm({
       toast.show(editing ? "予定を更新しました" : "予定を作成しました");
       void queryClient.invalidateQueries({ queryKey: qk.events });
       if (id) void queryClient.invalidateQueries({ queryKey: qk.event(id) });
-      onDone(id!);
+      onDone(id!, startsAt!);
     } catch (e) {
       toast.show(errorMessage(e), "error");
     } finally {

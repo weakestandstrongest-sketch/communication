@@ -463,6 +463,20 @@ await step("a personal event can be created from the calendar and is private to 
   await A.getByLabel("場所（任意）").fill("駅前クリニック");
   await shot(A, "d19-personal-event-form");
   await A.getByRole("button", { name: "予定を作成" }).click();
+  // after creating, the app returns to the calendar with the event's day selected
+  await A.waitForURL(/\/calendar$/);
+  await A.getByRole("tab", { name: "カレンダー", selected: true }).waitFor();
+  const sel = A.locator('[role="gridcell"][aria-selected="true"]');
+  if (!(await sel.getAttribute("aria-label")).startsWith(`${M + 1}月${D}日`)) throw new Error(`wrong day selected: ${await sel.getAttribute("aria-label")}`);
+  // the selected day's number stays readable on its circle (it used to turn white on white for today in dark mode)
+  for (const scheme of ["light", "dark"]) {
+    await A.emulateMedia({ colorScheme: scheme });
+    await A.waitForTimeout(250);
+    const c = await A.locator("[data-sel]").evaluate((el) => [getComputedStyle(el).color, getComputedStyle(el).backgroundColor]);
+    if (c[0] === c[1]) throw new Error(`selected number is invisible in ${scheme} mode: ${c}`);
+  }
+  await A.emulateMedia({ colorScheme: "light" });
+  await A.getByRole("link", { name: /歯医者の予約/ }).first().click();
   await A.waitForURL(/\/events\/[0-9a-f-]{36}$/);
   await A.getByText("個人の予定（自分だけに表示）").waitFor();
   if (await A.getByRole("heading", { name: "出欠" }).count()) throw new Error("attendance card on a personal event");
