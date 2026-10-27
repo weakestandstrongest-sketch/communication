@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -50,6 +51,7 @@ import { Composer } from "./composer";
 import { MessageItem } from "./message-item";
 import { ConversationAvatar, conversationTitle } from "./conversation-list";
 import { MessageSearch, PinnedBanner } from "./chat-tools";
+import { clearLabels, useClearConversation } from "@/lib/use-clear-conversation";
 
 const QUICK_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏", "🎉", "✅"];
 const GROUP_WINDOW_MS = 5 * 60_000;
@@ -101,6 +103,8 @@ export function ChatView({ conversationId }: { conversationId: string }) {
   const queryClient = useQueryClient();
   const toast = useToast();
   const confirm = useConfirm();
+  const router = useRouter();
+  const clearConversation = useClearConversation();
   const people = usePeople();
   const { data: conversations, isLoading: convLoading } = useConversations();
   const { data: groups } = useMyGroups();
@@ -734,6 +738,12 @@ export function ChatView({ conversationId }: { conversationId: string }) {
         online={online}
         onToggle={updateMembership}
         onOpenImage={(items, index) => setViewer({ items, index })}
+        onClear={async () => {
+          if (summary && (await clearConversation(summary))) {
+            setInfo(false);
+            router.replace("/talk");
+          }
+        }}
       />
 
       <ImageViewer items={viewer?.items ?? []} index={viewer ? viewer.index : null} onClose={() => setViewer(null)} />
@@ -823,6 +833,7 @@ function ConversationInfo({
   online,
   onToggle,
   onOpenImage,
+  onClear,
 }: {
   open: boolean;
   onClose: () => void;
@@ -832,6 +843,7 @@ function ConversationInfo({
   online: Set<string>;
   onToggle: (patch: { muted?: boolean; pinned?: boolean }) => void;
   onOpenImage: (items: ViewerItem[], index: number) => void;
+  onClear: () => void;
 }) {
   const { data: media } = useMedia(`conversation:${conversationId}`);
   const photos = (media ?? []).filter((m) => m.mime_type.startsWith("image/"));
@@ -909,6 +921,11 @@ function ConversationInfo({
             ))}
           </ul>
         </section>
+
+        <button type="button" onClick={onClear} className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-surface-2 text-[15px] font-semibold text-danger active:bg-surface-3">
+          <Trash2 className="size-[18px]" aria-hidden />
+          {clearLabels(summary.kind).action}
+        </button>
       </div>
     </Sheet>
   );

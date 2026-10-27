@@ -115,14 +115,14 @@ isOneToOne: false
                   ]
                 },"conversation_members": {
                   Row: {
-                    "conversation_id": string,"joined_at": string,"last_read_at": string,"muted": boolean,"pinned": boolean,"user_id": string
+                    "cleared_at": string | null,"conversation_id": string,"hidden": boolean,"joined_at": string,"last_read_at": string,"muted": boolean,"opened_at": string | null,"pinned": boolean,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "conversation_id": string,"joined_at"?: string,"last_read_at"?: string,"muted"?: boolean,"pinned"?: boolean,"user_id": string
+                    "cleared_at"?: string | null,"conversation_id": string,"hidden"?: boolean,"joined_at"?: string,"last_read_at"?: string,"muted"?: boolean,"opened_at"?: string | null,"pinned"?: boolean,"user_id": string
                   }
                   Update: {
-                    "conversation_id"?: string,"joined_at"?: string,"last_read_at"?: string,"muted"?: boolean,"pinned"?: boolean,"user_id"?: string
+                    "cleared_at"?: string | null,"conversation_id"?: string,"hidden"?: boolean,"joined_at"?: string,"last_read_at"?: string,"muted"?: boolean,"opened_at"?: string | null,"pinned"?: boolean,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -768,6 +768,9 @@ isOneToOne: true
 "can_delete_media_path":
 { Args: { "p_name": string }; Returns: boolean
                            },
+"can_read_message":
+{ Args: { "p_conversation_id": string,"p_created_at": string }; Returns: boolean
+                           },
 "can_upload_media_path":
 { Args: { "p_name": string }; Returns: boolean
                            },
@@ -776,6 +779,9 @@ isOneToOne: true
                            },
 "can_view_profile":
 { Args: { "p_user_id": string }; Returns: boolean
+                           },
+"clear_conversation":
+{ Args: { "p_conversation_id": string }; Returns: undefined
                            },
 "create_announcement":
 { Args: { "p_body": string,"p_event_id"?: string,"p_group_id": string,"p_important"?: boolean,"p_pinned"?: boolean,"p_poll_id"?: string,"p_post_to_chat"?: boolean,"p_title": string }; Returns: string

@@ -42,6 +42,12 @@ These rules are covered by `tests/integration/security.test.ts`, which uses four
 - Teams are created and changed only through `create_team`, `update_team`, `add_team_members` (team members or group admins; only people in the group are added), `remove_team_member` (anyone can leave; removing others is for the team's creator and group admins) and `delete_team` (creator or group admin).
 - Pinned (固定) messages: any member of a talk can fix one of its messages to the top (`set_pinned_message`); a deleted message is unpinned automatically.
 
+## Deleting a talk (for yourself)
+
+- `clear_conversation` sets a per-member cut-off (`cleared_at`). The `messages` policy (and the media policy for 1:1 talks) only returns messages sent after the member's cut-off, so cleared history is hidden through the API and through Realtime, not just in the UI. Other members are unaffected.
+- A deleted 1:1 room is hidden from that member's talk list until a new message arrives or they open the talk again. A group or team talk stays (it belongs to the group); only its history is cleared.
+- This hides messages from the person who deleted; it does not erase them from the database or storage, because the other members still see them. Files shared in a talk stay in private storage and are reachable only through signed URLs for members.
+
 ## Anonymous suggestion box (意見箱)
 
 - `feedback_posts` and `feedback_replies` have **no author column**. Authors, per-thread aliases and likes live in tables in the `private` schema, which the API cannot reach; only SECURITY DEFINER functions read them, and they return a `mine` flag instead of an author id. The tables are published to Realtime for live updates, and their rows identify nobody.

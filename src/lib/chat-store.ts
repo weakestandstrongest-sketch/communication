@@ -86,6 +86,12 @@ export function setChatUser(userId: string | null) {
   }
 }
 
+/** Drops the cached messages of one talk (after clearing it), so old history can't flash back. */
+export function forgetConversation(cid: string) {
+  states.delete(cid);
+  listeners.get(cid)?.forEach((l) => l());
+}
+
 export function resetChatStore() {
   states.clear();
   currentUserId = null;

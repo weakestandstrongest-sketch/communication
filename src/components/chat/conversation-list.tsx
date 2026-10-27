@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { AtSign, BellOff, MessageCirclePlus, MoreHorizontal, Pin, PinOff, Bell, Search } from "lucide-react";
+import { AtSign, BellOff, MessageCirclePlus, MoreHorizontal, Pin, PinOff, Bell, Search, Trash2 } from "lucide-react";
 import { getSupabase } from "@/lib/supabase/client";
 import { useUserId } from "@/lib/auth";
 import { qk, useConversations, usePeople } from "@/lib/queries";
@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { NewDirectSheet } from "./new-direct-sheet";
 import { LongPressLink } from "@/components/ui/long-press";
+import { clearLabels, useClearConversation } from "@/lib/use-clear-conversation";
 
 export function conversationTitle(c: Pick<ConversationSummary, "kind" | "group_name" | "team_name" | "peer_name">) {
   if (c.kind === "team") return c.team_name ?? "パート・バンド";
@@ -73,6 +74,7 @@ export function ConversationList() {
   const [newDm, setNewDm] = useState(false);
   const queryClient = useQueryClient();
   const toast = useToast();
+  const clear = useClearConversation();
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -210,6 +212,12 @@ export function ConversationList() {
                   label: menuFor.muted ? "通知をオンにする" : "通知をオフにする",
                   icon: menuFor.muted ? <Bell /> : <BellOff />,
                   onSelect: () => update(menuFor, { muted: !menuFor.muted }),
+                },
+                {
+                  label: clearLabels(menuFor.kind).action,
+                  icon: <Trash2 />,
+                  destructive: true,
+                  onSelect: () => void clear(menuFor),
                 },
               ]
             : []

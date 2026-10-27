@@ -610,6 +610,40 @@ await step("talk search finds old messages and 固定 pins one to the top", asyn
   await B.getByRole("button", { name: /^固定メッセージ/ }).waitFor({ state: "detached", timeout: 8000 });
 });
 
+await step("a 1:1 talk can be deleted from the list (only for you) and comes back with a new message", async () => {
+  const dm = (await owner.client.rpc("get_or_create_direct", { p_user_id: member.id })).data;
+  await A.goto(`${APP_URL}/talk`);
+  const row = A.getByRole("link", { name: /^伊藤 健/ });
+  await row.waitFor();
+  await row.click({ button: "right" });
+  await shot(A, "d28-talk-delete-menu");
+  await A.getByRole("button", { name: "トークを削除" }).click();
+  await A.getByRole("button", { name: "削除", exact: true }).click();
+  await row.waitFor({ state: "detached" });
+  // the other person still has it, and a new message from them brings it back for me
+  await B.goto(`${APP_URL}/talk`);
+  await B.getByRole("link", { name: /^高橋 美咲/ }).waitFor();
+  await member.client.rpc("send_message", { p_conversation_id: dm, p_client_id: crypto.randomUUID(), p_body: "お疲れさま" });
+  await A.reload();
+  await A.getByRole("link", { name: /^伊藤 健/ }).waitFor();
+});
+
+await step("deleting a group talk's history from its info sheet empties it but keeps the room", async () => {
+  const conv = (await admin.from("conversations").select("id").eq("group_id", groupId).eq("kind", "group").single()).data.id;
+  await A.goto(`${APP_URL}/talk/${conv}`);
+  await A.getByRole("log").getByText("サビのテンポ速くない？").waitFor();
+  await A.getByRole("button", { name: "トーク情報" }).click();
+  await A.getByRole("button", { name: "トーク履歴を削除" }).click();
+  await A.getByRole("button", { name: "削除", exact: true }).click();
+  await A.waitForURL(/\/talk$/);
+  await A.getByRole("link", { name: /軽音サークル/ }).first().click();
+  await A.getByText("メッセージはまだありません").waitFor();
+  if (await A.getByText("サビのテンポ速くない？").count()) throw new Error("cleared history is still visible");
+  // another member keeps their history
+  await B.goto(`${APP_URL}/talk/${conv}`);
+  await B.getByRole("log").getByText("サビのテンポ速くない？").waitFor();
+});
+
 await step("the launch animation plays once per session and never blocks taps", async () => {
   const ctx = await browser.newContext({ ...iphone });
   const p = await ctx.newPage();

@@ -13,6 +13,7 @@ All schema changes are SQL migrations in `supabase/migrations/`, applied in file
 | `20261027000003_personal_events.sql` | Personal events: nullable `events.group_id`, `personal_user_id`, RLS, `create_personal_event` |
 | `20261028000001_team_kind.sql` | Adds the `team` conversation kind (own migration: a new enum value can't be used in the transaction that adds it) |
 | `20261028000002_teams_pins.sql` | パート・バンド: `teams`, `team_members`, team talk rooms, `events.team_id`, team-scoped RLS / notifications / reminders / attendance; pinned messages (`conversations.pinned_message_id`) |
+| `20261029000001_clear_conversation.sql` | Delete a talk for yourself: `conversation_members.cleared_at / hidden / opened_at`, `can_read_message` (message and 1:1 media RLS), `clear_conversation`, talk list that hides cleared history |
 | `20261026000005_storage_realtime.sql` | Private `media` bucket and its policies, Realtime publication, private-channel policies |
 
 `src/lib/database.types.ts` is generated from the schema (`npm run db:types`).
