@@ -144,13 +144,12 @@ export function MonthCalendar({
     const dx = to.x - from.x;
     const dy = to.y - from.y;
     const at = (x: number, y: number, sx = 1, sy = sx) => `translate(${x}px, ${y}px) scale(${sx}, ${sy})`;
+    // Straight line from the old day to the new one. The circle travels above the grid and carries
+    // the new day's number, which fades in as it lands, so the number never disappears under it.
     const frames: Keyframe[] = monthChanged
       ? [
-          // lifts off, shrinks and arcs towards the same day of the new month, then lands with a squish
           { transform: at(from.x, from.y), opacity: 1 },
-          { transform: at(from.x + dx * 0.12, from.y + dy * 0.12 - 10, 0.82), opacity: 0.85, offset: 0.2 },
-          { transform: at(from.x + dx * 0.55, from.y + dy * 0.55 - 26, 0.62), opacity: 0.55, offset: 0.55 },
-          { transform: at(to.x, to.y, 1.12, 0.9), opacity: 1, offset: 0.86 },
+          { transform: at(from.x + dx * 0.5, from.y + dy * 0.5, 0.9), opacity: 0.7, offset: 0.5 },
           { transform: at(to.x, to.y), opacity: 1 },
         ]
       : [
@@ -158,15 +157,18 @@ export function MonthCalendar({
           { transform: at(from.x + dx * 0.5, from.y + dy * 0.5, Math.abs(dx) >= Math.abs(dy) ? 1.18 : 0.88, Math.abs(dx) >= Math.abs(dy) ? 0.88 : 1.18), offset: 0.45 },
           { transform: at(to.x, to.y), opacity: 1 },
         ];
-    const anim = ball.animate(frames, {
-      duration: monthChanged ? 640 : 380,
-      easing: monthChanged ? "cubic-bezier(0.45, 0, 0.2, 1)" : "cubic-bezier(0.3, 0.9, 0.3, 1)",
-      fill: "none",
-    });
+    const timing = { duration: monthChanged ? 520 : 380, easing: monthChanged ? "cubic-bezier(0.55, 0, 0.25, 1)" : "cubic-bezier(0.3, 0.9, 0.3, 1)" };
+    const label = ball.firstElementChild as HTMLElement | null;
+    if (label) label.textContent = target.textContent;
+    const anim = ball.animate(frames, { ...timing, fill: "none" });
+    const fade = label?.animate([{ opacity: 0 }, { opacity: 0, offset: 0.55 }, { opacity: 1 }], { ...timing, easing: "linear", fill: "none" });
     const land = () => delete target.dataset.flying;
     anim.onfinish = land;
     anim.oncancel = land;
-    return () => anim.cancel();
+    return () => {
+      anim.cancel();
+      fade?.cancel();
+    };
   }, [selKey, monthKey]);
 
   // Keep the resting position fresh while cells grow (zoom) or the screen resizes.
@@ -219,7 +221,9 @@ export function MonthCalendar({
         className="relative overflow-clip rounded-[var(--radius-card)] bg-surface p-1.5 select-none"
         style={{ touchAction: "pan-y" }}
       >
-        <span ref={flyer} aria-hidden className="pointer-events-none absolute top-0 left-0 z-0 size-7 rounded-full bg-label opacity-0" />
+        <span ref={flyer} aria-hidden className="pointer-events-none absolute top-0 left-0 z-[2] flex size-7 items-center justify-center rounded-full bg-label text-[14px] font-bold text-bg tabular opacity-0">
+          <span />
+        </span>
         <div className="grid grid-cols-7 pb-1" aria-hidden>
           {WEEKDAYS.map((w, i) => (
             <div key={w} className={cn("py-1 text-center text-[10px] font-semibold tracking-wider", i === 0 ? "text-danger" : "text-label-3")}>
@@ -255,10 +259,12 @@ export function MonthCalendar({
                   <span
                     data-sel={sel ? "" : undefined}
                     className={cn(
-                      "flex size-7 items-center justify-center rounded-full text-[14px] tabular transition-colors duration-150",
+                      "flex size-7 items-center justify-center rounded-full text-[14px] tabular",
+                      // no color transition on the selected day: the flying circle hands over to it in a single frame
+                      !sel && "transition-colors duration-150",
                       // Selected and today styles are exclusive: both set a text color, and the stylesheet order (not the class order) would pick one.
                       !sel && (today ? "bg-danger font-bold text-white" : red ? "text-danger" : ""),
-                      sel && "bg-label font-bold text-bg data-flying:duration-0",
+                      sel && "bg-label font-bold text-bg",
                       sel && (today
                         ? "ring-2 ring-danger ring-offset-1 ring-offset-surface data-flying:bg-danger data-flying:text-white data-flying:ring-0"
                         : red ? "data-flying:bg-transparent data-flying:text-danger" : "data-flying:bg-transparent data-flying:text-label"),
