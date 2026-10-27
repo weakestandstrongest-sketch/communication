@@ -3,6 +3,14 @@
 import { useState } from "react";
 import { cn } from "@/lib/cn";
 import { groupColor, personColor } from "@/lib/colors";
+import { useSignedUrl } from "@/lib/media";
+
+/** Google avatars are https URLs; custom photos are private storage paths. */
+function useImageSrc(src: string | null | undefined) {
+  const isUrl = Boolean(src && /^https?:\/\//.test(src));
+  const signed = useSignedUrl(src && !isUrl ? src : null);
+  return isUrl ? (src ?? null) : signed;
+}
 
 const SIZE: Record<number, string> = {
   20: "size-5 text-[9px]",
@@ -40,12 +48,13 @@ export function Avatar({
   className?: string;
 }) {
   const [failed, setFailed] = useState(false);
+  const url = useImageSrc(src);
   return (
     <span className={cn("relative inline-flex shrink-0", className)}>
-      {src && !failed ? (
+      {url && !failed ? (
         // eslint-disable-next-line @next/next/no-img-element -- external Google avatars, already small
         <img
-          src={src}
+          src={url}
           alt=""
           referrerPolicy="no-referrer"
           loading="lazy"
@@ -71,15 +80,31 @@ export function Avatar({
 export function GroupAvatar({
   name,
   color,
+  icon,
   size = 40,
   className,
 }: {
   name: string | null | undefined;
   color?: string | null;
+  icon?: string | null;
   size?: keyof typeof SIZE;
   className?: string;
 }) {
   const c = groupColor(color);
+  const url = useImageSrc(icon);
+  const [failed, setFailed] = useState(false);
+  if (url && !failed) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element -- short-lived signed URL from private storage
+      <img
+        src={url}
+        alt=""
+        loading="lazy"
+        onError={() => setFailed(true)}
+        className={cn("shrink-0 rounded-[30%] bg-surface-3 object-cover", SIZE[size], className)}
+      />
+    );
+  }
   return (
     <span
       aria-hidden

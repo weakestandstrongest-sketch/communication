@@ -24,6 +24,7 @@
 | `event_attendance` | your own rows; everyone's when the event's visibility is "members", otherwise admins and the organizer | `set_attendance` (member; checks attendance is enabled, the deadline, cancellation and whether the event has ended) |
 | `announcements` | group members | `create_announcement` (respects the setting; pinning is admin-only); update and delete by the author or an admin; a trigger blocks non-admins from changing `pinned` |
 | `announcement_reads` | your own rows (counts via `get_announcement_read_count`) | insert your own read receipt |
+| Profile photos / group icons | `u/{user}/…` readable by people who can see that profile, writable only by the user; `g/{group}/icon/…` readable by members, writable only by admins; `profiles.avatar_url` and `groups.icon_path` must point into their own folder (trigger) | |
 | `albums`, `media_items` | group members (DM media: conversation members) | albums: members create, creator or admin edit and delete; media rows must reference a storage object **the caller uploaded** (`owns_storage_object`) at the right path |
 | `notifications` | the recipient only | the recipient may set `read_at` or delete; rows are created only by triggers |
 | `notification_preferences`, `user_settings` | your own rows | your own rows (preferences only for groups you belong to) |

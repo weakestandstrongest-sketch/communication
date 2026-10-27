@@ -42,7 +42,7 @@ export default function GroupsPage() {
                 <li key={g.id}>
                   <Link href={`/groups/${g.id}`} className="block">
                     <Card className="flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-surface-2 active:bg-surface-3">
-                      <GroupAvatar name={g.name} color={g.color} size={52} />
+                      <GroupAvatar name={g.name} color={g.color} icon={g.icon_path} size={52} />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[17px] font-semibold">{g.name}</p>
                         <p className="truncate text-[13px] text-label-3">

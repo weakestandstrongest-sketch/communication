@@ -18,6 +18,8 @@ import { EmptyState, ListSkeleton } from "@/components/ui/empty-state";
 import { useConfirm } from "@/components/ui/confirm";
 import { useToast } from "@/components/ui/toast";
 import { ColorPicker } from "@/components/groups/color-picker";
+import { PhotoPicker } from "@/components/profile/photo-picker";
+import { GroupAvatar } from "@/components/ui/avatar";
 
 export default function GroupSettingsPage() {
   const { id } = useParams<{ id: string }>();
@@ -71,6 +73,24 @@ function AdminSettings({ group }: { group: MyGroup }) {
       <section>
         <SectionHeader title="基本情報" />
         <Card className="space-y-4 px-4 py-4">
+          <PhotoPicker
+            prefix={`g/${group.id}/icon/`}
+            preview={<GroupAvatar name={group.name} color={group.color} icon={group.icon_path} size={72} />}
+            hasPhoto={Boolean(group.icon_path)}
+            label="アイコンを変更"
+            onUploaded={async (path) => {
+              const old = group.icon_path;
+              if (await save({ icon_path: path }, "グループのアイコンを変更しました")) {
+                if (old) void removeMedia([old]).catch(() => undefined);
+              }
+            }}
+            onRemove={async () => {
+              const old = group.icon_path;
+              if (await save({ icon_path: null }, "グループのアイコンを削除しました")) {
+                if (old) void removeMedia([old]).catch(() => undefined);
+              }
+            }}
+          />
           <Field label="グループ名" htmlFor="gs-name">
             <Input id="gs-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={60} />
           </Field>

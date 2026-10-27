@@ -42,7 +42,7 @@ function crc32(buf) {
   return ~c >>> 0;
 }
 
-export async function runPart2({ browser, A, B, C, X, owner, member, member2, step, shot, groupId, conversationId, admin }) {
+export async function runPart2({ browser, A, B, C, X, member, member2, step, shot, groupId, conversationId, admin }) {
   let pollId = "";
   let eventId = "";
   let announcementId = "";
@@ -110,10 +110,11 @@ export async function runPart2({ browser, A, B, C, X, owner, member, member2, st
 
   await step("the event appears once in the calendar for other members", async () => {
     await A.goto(`${APP_URL}/calendar`);
-    await A.getByRole("tab", { name: "リスト" }).click();
-    await A.getByText("練習試合 vs 東和大学").waitFor();
-    if ((await A.getByText("練習試合 vs 東和大学").count()) !== 1) throw new Error("event shown more than once");
-    await A.getByRole("tab", { name: "月" }).click();
+    await A.getByRole("button", { name: "拡大" }).click();
+    const grid = A.locator("[data-zoom]");
+    await grid.getByText("練習試合 vs 東和大学").first().waitFor();
+    if ((await grid.getByText("練習試合 vs 東和大学").count()) !== 1) throw new Error("event shown more than once");
+    await A.getByRole("button", { name: "縮小" }).click();
     await shot(A, "11-calendar-month");
   });
 

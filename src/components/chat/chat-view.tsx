@@ -456,7 +456,7 @@ export function ChatView({ conversationId }: { conversationId: string }) {
         avatar={
           summary &&
           (summary.kind === "group" ? (
-            <GroupAvatar name={summary.group_name} color={summary.group_color} size={36} />
+            <GroupAvatar name={summary.group_name} color={summary.group_color} icon={summary.group_icon_path} size={36} />
           ) : (
             <Avatar name={summary.peer_name} src={summary.peer_avatar_url} id={summary.peer_id} size={36} online={onlineOthers.length > 0} />
           ))
@@ -789,7 +789,7 @@ function ConversationInfo({
       <div className="space-y-5 px-4 pb-6">
         <div className="flex flex-col items-center pt-2 text-center">
           {summary.kind === "group" ? (
-            <GroupAvatar name={summary.group_name} color={summary.group_color} size={72} />
+            <GroupAvatar name={summary.group_name} color={summary.group_color} icon={summary.group_icon_path} size={72} />
           ) : (
             <Avatar name={summary.peer_name} src={summary.peer_avatar_url} id={summary.peer_id} size={72} />
           )}

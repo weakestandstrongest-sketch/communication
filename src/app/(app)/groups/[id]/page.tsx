@@ -100,7 +100,7 @@ function GroupDetail() {
       <PageBody className="space-y-5">
         <Card className="px-4 py-5 text-center">
           <div className="flex justify-center">
-            <GroupAvatar name={group.name} color={group.color} size={72} />
+            <GroupAvatar name={group.name} color={group.color} icon={group.icon_path} size={72} />
           </div>
           <h2 className="mt-3 text-[22px] font-bold">{group.name}</h2>
           <p className="text-[13px] text-label-3">

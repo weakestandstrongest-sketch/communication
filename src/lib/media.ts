@@ -162,3 +162,28 @@ export async function downloadUrl(path: string, name: string): Promise<string | 
 export function clearSignedUrlCache() {
   cache.clear();
 }
+
+/**
+ * Center-crops an image to a 512px square JPEG and uploads it as a profile photo / group icon.
+ * `prefix` is "u/{userId}/" or "g/{groupId}/icon/". Returns the storage path.
+ */
+export async function uploadSquareImage(prefix: string, file: File): Promise<string> {
+  if (!file.type.startsWith("image/")) throw new Error("画像ファイルを選んでください");
+  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" } as ImageBitmapOptions).catch(() => null);
+  if (!bitmap) throw new Error("この画像は読み込めませんでした");
+  const side = Math.min(bitmap.width, bitmap.height);
+  const size = Math.min(512, side);
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("画像を処理できませんでした");
+  ctx.drawImage(bitmap, (bitmap.width - side) / 2, (bitmap.height - side) / 2, side, side, 0, 0, size, size);
+  bitmap.close?.();
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.88));
+  if (!blob) throw new Error("画像を処理できませんでした");
+  const path = `${prefix}${crypto.randomUUID()}.jpg`;
+  const { error } = await getSupabase().storage.from("media").upload(path, blob, { contentType: "image/jpeg", cacheControl: "31536000" });
+  if (error) throw error;
+  return path;
+}

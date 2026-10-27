@@ -1,10 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Bell,
   CalendarCheck2,
+  Images,
+  Pencil,
+  Search,
+  Settings,
+  UserPlus,
   CalendarDays,
   ChevronRight,
   Megaphone,
@@ -32,7 +37,8 @@ import {
 import { useUserId } from "@/lib/auth";
 import { formatAgo, formatDeadline, formatEventRange, formatListTime, relativeDay } from "@/lib/format";
 import { ATTENDANCE_LABEL, CATEGORY_COLOR, type AttendanceStatus } from "@/lib/types";
-import { PageBody, PageHeader } from "@/components/layout/page-header";
+import { PageBody } from "@/components/layout/page-header";
+import { SearchSheet } from "@/components/home/search-sheet";
 import { Avatar, GroupAvatar, GroupTag } from "@/components/ui/avatar";
 import { CountBadge, Pill } from "@/components/ui/badge";
 import { Card, SectionHeader } from "@/components/ui/card";
@@ -74,6 +80,7 @@ export default function HomePage() {
   const { data: notifications } = useNotifications();
   const unreadNotifications = useUnreadNotificationCount();
   const people = usePeople();
+  const [search, setSearch] = useState(false);
   const now = useNow();
 
   const groupById = useMemo(() => new Map((groups ?? []).map((g) => [g.id, g])), [groups]);
@@ -127,6 +134,8 @@ export default function HomePage() {
     return items.sort((a, b) => a.sort - b.sort);
   }, [polls, events, myAttendance, announcements, reads, groupById, myId, now]);
 
+  const unansweredPolls = (polls ?? []).filter((p) => !p.responded && !isPollClosed(p));
+  const pendingEvents = (events ?? []).filter((e) => needsAttendance(e, myAttendance));
   const unreadConversations = (conversations ?? []).filter((c) => Number(c.unread_count) > 0).slice(0, 5);
   const upcoming = (events ?? [])
     .filter((e) => !e.canceled_at && new Date(e.ends_at ?? e.starts_at).getTime() >= now)
@@ -136,18 +145,45 @@ export default function HomePage() {
 
   return (
     <>
-      <PageHeader
-        title="ホーム"
-        subtitle={me ? `${greeting()}、${me.display_name}さん` : undefined}
-        large
-        actions={
-          <Link href="/notifications" aria-label={`通知${unreadNotifications ? `（未読${unreadNotifications}件）` : ""}`} className="relative flex size-10 items-center justify-center rounded-full text-accent hover:bg-accent-soft lg:hidden">
-            <Bell className="size-[22px]" />
-            {unreadNotifications > 0 && <CountBadge count={unreadNotifications} className="absolute top-0.5 right-0 h-[18px] min-w-[18px] text-[10px]" />}
-          </Link>
-        }
-      />
-      <PageBody className="space-y-7">
+      <header className="pt-safe">
+        <div className="mx-auto max-w-3xl px-4">
+          <div className="flex h-12 items-center justify-end gap-1">
+            <Link href="/groups/join" aria-label="招待コードで参加" className="flex size-10 items-center justify-center rounded-full hover:bg-surface">
+              <UserPlus className="size-[22px]" />
+            </Link>
+            <Link href="/notifications" aria-label={`通知${unreadNotifications ? `（未読${unreadNotifications}件）` : ""}`} className="relative flex size-10 items-center justify-center rounded-full hover:bg-surface">
+              <Bell className="size-[22px]" />
+              {unreadNotifications > 0 && <CountBadge count={unreadNotifications} className="absolute top-0.5 right-0 h-[18px] min-w-[18px] text-[10px]" />}
+            </Link>
+            <Link href="/settings" aria-label="設定" className="flex size-10 items-center justify-center rounded-full hover:bg-surface">
+              <Settings className="size-[22px]" />
+            </Link>
+          </div>
+          <div className="flex items-center gap-4 pt-1 pb-4">
+            <div className="min-w-0 flex-1">
+              <h1 className="truncate font-[family-name:var(--font-display)] text-[30px] leading-tight font-bold tracking-tight">{me?.display_name ?? " "}</h1>
+              <p className="mt-0.5 truncate text-[14px] text-label-3">{me?.bio || greeting()}</p>
+              <Link href="/settings" className="mt-2 inline-flex h-7 items-center gap-1.5 rounded-full border border-separator-strong px-3 text-[12px] font-medium text-label-2">
+                <Pencil className="size-3" aria-hidden />
+                プロフィールを編集
+              </Link>
+            </div>
+            <Link href="/settings" aria-label="プロフィール写真を変更">
+              <Avatar name={me?.display_name} src={me?.avatar_url} id={me?.id} size={72} className="[&>*]:!size-[76px]" />
+            </Link>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSearch(true)}
+            className="flex h-11 w-full items-center gap-2.5 rounded-2xl bg-surface px-4 text-left text-[15px] text-label-3"
+            aria-label="グループ・メンバー・投票・予定を検索"
+          >
+            <Search className="size-[18px]" aria-hidden />
+            グループ、メンバー、予定を検索
+          </button>
+        </div>
+      </header>
+      <PageBody className="space-y-7 pt-5">
         {groupsLoading ? (
           <ListSkeleton rows={4} />
         ) : !groups?.length ? (
@@ -199,6 +235,68 @@ export default function HomePage() {
               )}
             </section>
 
+            <section aria-label="リスト">
+              <SectionHeader title="リスト" action={<Link href="/groups" className="text-[13px] font-semibold text-label-3">すべて見る</Link>} />
+              <ul className="divide-y divide-separator">
+                {[
+                  { href: "/groups", title: "グループ", sub: groups.map((g) => g.name).join("、"), count: groups.length, avatars: groups.slice(0, 3).map((g) => <GroupAvatar key={g.id} name={g.name} color={g.color} icon={g.icon_path} size={28} />) },
+                  { href: "/polls", title: "未回答の投票", sub: unansweredPolls.slice(0, 2).map((p) => p.title).join("、") || "未回答はありません", count: unansweredPolls.length, avatars: null },
+                  { href: "/calendar", title: "出欠が未回答の予定", sub: pendingEvents.slice(0, 2).map((e) => e.title).join("、") || "未回答はありません", count: pendingEvents.length, avatars: null },
+                  { href: "/talk", title: "未読のトーク", sub: unreadConversations.slice(0, 2).map((c) => conversationTitle(c)).join("、") || "未読はありません", count: unreadConversations.length, avatars: null },
+                ].map((row) => (
+                  <li key={row.title}>
+                    <Link href={row.href} className="flex items-center gap-3.5 py-3">
+                      <span className="flex size-[52px] shrink-0 items-center justify-center">
+                        {row.avatars ? <span className="flex -space-x-2.5">{row.avatars}</span> : <ListIcon title={row.title} />}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[16px] font-bold">{row.title}</span>
+                        <span className="block truncate text-[13px] text-label-3">{row.sub}</span>
+                      </span>
+                      <span className={cn("text-[15px] tabular", row.count > 0 && row.title !== "グループ" ? "font-bold text-danger" : "text-label-3")}>{row.count}</span>
+                      <ChevronRight className="size-4 text-label-4" aria-hidden />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            <section aria-label="かんたん操作">
+              <ul className="grid grid-cols-4 gap-2">
+                {[
+                  { href: "/polls/new", label: "投票を作成", icon: Vote },
+                  { href: "/events/new", label: "予定を作成", icon: CalendarDays },
+                  { href: "/announcements/new", label: "お知らせ", icon: Megaphone },
+                  { href: `/groups/${groups[0]?.id ?? ""}/albums`, label: "写真", icon: Images },
+                ].map(({ href, label, icon: Icon }) => (
+                  <li key={label}>
+                    <Link href={href} className="flex flex-col items-center gap-2 rounded-2xl py-3 active:bg-surface">
+                      <Icon className="size-7" strokeWidth={1.6} aria-hidden />
+                      <span className="text-[12px] font-medium">{label}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              <ul className="scrollbar-none mt-2 flex gap-4 overflow-x-auto pt-2 pb-1" aria-label="グループのショートカット">
+                {groups.map((g) => (
+                  <li key={g.id} className="w-[64px] shrink-0">
+                    <Link href={`/groups/${g.id}`} className="flex flex-col items-center gap-1.5 text-center">
+                      <GroupAvatar name={g.name} color={g.color} icon={g.icon_path} size={48} className="!rounded-full [&]:rounded-full" />
+                      <span className="line-clamp-2 text-[11px] leading-tight font-medium">{g.name}</span>
+                    </Link>
+                  </li>
+                ))}
+                <li className="w-[64px] shrink-0">
+                  <Link href="/groups/new" className="flex flex-col items-center gap-1.5 text-center" aria-label="グループを作成">
+                    <span className="flex size-12 items-center justify-center rounded-full border border-dashed border-separator-strong">
+                      <Plus className="size-5 text-label-3" aria-hidden />
+                    </span>
+                    <span className="text-[11px] font-medium text-label-3">追加</span>
+                  </Link>
+                </li>
+              </ul>
+            </section>
+
             {pinned.length > 0 && (
               <section aria-label="ピン留めされたお知らせ">
                 <SectionHeader title="お知らせ" action={<Link href="/groups" className="text-[13px] font-semibold text-accent">すべて</Link>} />
@@ -241,7 +339,7 @@ export default function HomePage() {
                       <li key={c.id}>
                         <Link href={`/talk/${c.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-surface-2 active:bg-surface-3">
                           {c.kind === "group" ? (
-                            <GroupAvatar name={c.group_name} color={c.group_color} size={40} />
+                            <GroupAvatar name={c.group_name} color={c.group_color} icon={c.group_icon_path} size={40} />
                           ) : (
                             <Avatar name={c.peer_name} src={c.peer_avatar_url} id={c.peer_id} size={40} />
                           )}
@@ -327,7 +425,17 @@ export default function HomePage() {
           </>
         )}
       </PageBody>
+      <SearchSheet open={search} onClose={() => setSearch(false)} />
     </>
+  );
+}
+
+function ListIcon({ title }: { title: string }) {
+  const Icon = title.includes("投票") ? Vote : title.includes("予定") ? CalendarCheck2 : MessageCircle;
+  return (
+    <span className="flex size-[44px] items-center justify-center rounded-full bg-surface">
+      <Icon className="size-5" aria-hidden />
+    </span>
   );
 }
 

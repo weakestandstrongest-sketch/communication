@@ -34,7 +34,7 @@ function useNavItems(): NavItem[] {
     { href: "/talk", label: "トーク", icon: MessageCircle, badge: unread, match: (p) => p.startsWith("/talk") },
     {
       href: "/calendar",
-      label: "カレンダー",
+      label: "予定",
       icon: CalendarDays,
       badge: attendance,
       match: (p) => p.startsWith("/calendar") || p.startsWith("/events"),
@@ -56,24 +56,27 @@ function TabBar() {
   const hidden = /^\/talk\/.+/.test(pathname) || /\/(new|edit)$/.test(pathname);
   if (hidden) return null;
   return (
-    <nav aria-label="メインナビゲーション" className="glass hairline-t fixed inset-x-0 bottom-0 z-40 pb-safe lg:hidden">
-      <ul className="mx-auto flex h-14 max-w-xl items-stretch">
+    <nav
+      aria-label="メインナビゲーション"
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-3 pb-[max(10px,env(safe-area-inset-bottom))] lg:hidden"
+    >
+      <ul className="glass-bar pointer-events-auto flex h-[64px] w-[min(28rem,calc(100vw-1.5rem))] items-stretch gap-0 rounded-[32px] p-1">
         {items.map((item) => {
           const active = item.match(pathname);
           const Icon = item.icon;
           return (
-            <li key={item.href} className="flex-1">
+            <li key={item.href} className="min-w-0 flex-1">
               <Link
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative flex h-full flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors",
-                  active ? "text-accent" : "text-label-3",
+                  "relative flex h-full min-w-0 flex-col items-center justify-center gap-0.5 rounded-full text-[10px] font-semibold transition-all duration-200 active:scale-95",
+                  active ? "bg-label/[0.09] text-label" : "text-label-3",
                 )}
               >
                 <span className="relative">
-                  <Icon className="size-6" strokeWidth={active ? 2.3 : 1.8} aria-hidden />
-                  {item.badge ? <CountBadge count={item.badge} className="absolute -top-1.5 left-3.5 h-[18px] min-w-[18px] text-[10px]" /> : null}
+                  <Icon className="size-[22px]" strokeWidth={active ? 2.3 : 1.8} aria-hidden />
+                  {item.badge ? <CountBadge count={item.badge} className="absolute -top-1.5 left-3 h-[17px] min-w-[17px] text-[10px]" /> : null}
                 </span>
                 {item.label}
               </Link>
@@ -147,7 +150,7 @@ function Sidebar() {
                       pathname.startsWith(`/groups/${g.id}`) ? "bg-surface-3 font-semibold" : "text-label-2 hover:bg-surface-2",
                     )}
                   >
-                    <GroupAvatar name={g.name} color={g.color} size={24} />
+                    <GroupAvatar name={g.name} color={g.color} icon={g.icon_path} size={24} />
                     <span className="truncate">{g.name}</span>
                   </Link>
                 </li>

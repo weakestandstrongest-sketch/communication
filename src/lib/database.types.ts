@@ -265,14 +265,14 @@ isOneToOne: false
                   ]
                 },"groups": {
                   Row: {
-                    "color": string,"created_at": string,"created_by": string | null,"description": string,"id": string,"member_can_create_events": boolean,"member_can_create_polls": boolean,"member_can_invite": boolean,"member_can_post_announcements": boolean,"name": string,"updated_at": string
+                    "color": string,"created_at": string,"created_by": string | null,"description": string,"icon_path": string | null,"id": string,"member_can_create_events": boolean,"member_can_create_polls": boolean,"member_can_invite": boolean,"member_can_post_announcements": boolean,"name": string,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "color"?: string,"created_at"?: string,"created_by"?: string | null,"description"?: string,"id"?: string,"member_can_create_events"?: boolean,"member_can_create_polls"?: boolean,"member_can_invite"?: boolean,"member_can_post_announcements"?: boolean,"name": string,"updated_at"?: string
+                    "color"?: string,"created_at"?: string,"created_by"?: string | null,"description"?: string,"icon_path"?: string | null,"id"?: string,"member_can_create_events"?: boolean,"member_can_create_polls"?: boolean,"member_can_invite"?: boolean,"member_can_post_announcements"?: boolean,"name": string,"updated_at"?: string
                   }
                   Update: {
-                    "color"?: string,"created_at"?: string,"created_by"?: string | null,"description"?: string,"id"?: string,"member_can_create_events"?: boolean,"member_can_create_polls"?: boolean,"member_can_invite"?: boolean,"member_can_post_announcements"?: boolean,"name"?: string,"updated_at"?: string
+                    "color"?: string,"created_at"?: string,"created_by"?: string | null,"description"?: string,"icon_path"?: string | null,"id"?: string,"member_can_create_events"?: boolean,"member_can_create_polls"?: boolean,"member_can_invite"?: boolean,"member_can_post_announcements"?: boolean,"name"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -637,6 +637,9 @@ isOneToOne: true
 "can_delete_media_path":
 { Args: { "p_name": string }; Returns: boolean
                            },
+"can_upload_media_path":
+{ Args: { "p_name": string }; Returns: boolean
+                           },
 "can_view_event_attendance":
 { Args: { "p_event_id": string }; Returns: boolean
                            },
@@ -695,7 +698,7 @@ isOneToOne: true
                            },
 "get_conversations":
 { Args: Record<PropertyKey, never>; Returns: {
-              "group_color": string,"group_id": string,"group_name": string,"id": string,"kind": Database["public"]['Enums']["conversation_kind"],"last_message_at": string,"last_message_body": string,"last_message_deleted": boolean,"last_message_kind": Database["public"]['Enums']["message_kind"],"last_message_sender_id": string,"last_message_sender_name": string,"last_read_at": string,"member_count": number,"mention_count": number,"muted": boolean,"peer_avatar_url": string,"peer_id": string,"peer_name": string,"pinned": boolean,"unread_count": number
+              "group_color": string,"group_icon_path": string,"group_id": string,"group_name": string,"id": string,"kind": Database["public"]['Enums']["conversation_kind"],"last_message_at": string,"last_message_body": string,"last_message_deleted": boolean,"last_message_kind": Database["public"]['Enums']["message_kind"],"last_message_sender_id": string,"last_message_sender_name": string,"last_read_at": string,"member_count": number,"mention_count": number,"muted": boolean,"peer_avatar_url": string,"peer_id": string,"peer_name": string,"pinned": boolean,"unread_count": number
             }[]
                            },
 "get_event_attendance":

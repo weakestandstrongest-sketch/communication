@@ -10,6 +10,8 @@ import { qk, useMyGroups, useMyProfile, useUserSettings } from "@/lib/queries";
 import { errorMessage } from "@/lib/errors";
 import { enablePush, disablePush, getCurrentSubscription, getPushSupport, isIOS, isStandalone, type PushSupport } from "@/lib/push";
 import { signOut } from "@/lib/sign-out";
+import { removeMedia } from "@/lib/media";
+import { PhotoPicker } from "@/components/profile/photo-picker";
 import { PageBody, PageHeader } from "@/components/layout/page-header";
 import { Card, SectionHeader } from "@/components/ui/card";
 import { Avatar, GroupAvatar } from "@/components/ui/avatar";
@@ -62,10 +64,32 @@ function ProfileSection() {
     <section>
       <SectionHeader title="プロフィール" />
       <Card className="space-y-4 px-4 py-4">
-        <div className="flex items-center gap-3">
-          <Avatar name={me.display_name} src={me.avatar_url} id={me.id} size={56} />
-          <p className="text-[13px] leading-relaxed text-label-3">プロフィール画像はGoogleアカウントの画像が使われます。</p>
-        </div>
+        <PhotoPicker
+          prefix={`u/${me.id}/`}
+          preview={<Avatar name={me.display_name} src={me.avatar_url} id={me.id} size={72} />}
+          hasPhoto={Boolean(me.avatar_url)}
+          label="プロフィール写真を変更"
+          onUploaded={async (path) => {
+            const old = me.avatar_url && !/^https?:\/\//.test(me.avatar_url) ? me.avatar_url : null;
+            const { error } = await getSupabase().from("profiles").update({ avatar_url: path }).eq("id", me.id);
+            if (error) throw error;
+            if (old) void removeMedia([old]).catch(() => undefined);
+            toast.show("プロフィール写真を変更しました");
+            void queryClient.invalidateQueries({ queryKey: qk.me });
+            void queryClient.invalidateQueries({ queryKey: qk.members });
+            void queryClient.invalidateQueries({ queryKey: qk.conversations });
+          }}
+          onRemove={async () => {
+            const old = me.avatar_url && !/^https?:\/\//.test(me.avatar_url) ? me.avatar_url : null;
+            const { error } = await getSupabase().from("profiles").update({ avatar_url: null }).eq("id", me.id);
+            if (error) throw error;
+            if (old) void removeMedia([old]).catch(() => undefined);
+            toast.show("プロフィール写真を削除しました");
+            void queryClient.invalidateQueries({ queryKey: qk.me });
+            void queryClient.invalidateQueries({ queryKey: qk.members });
+            void queryClient.invalidateQueries({ queryKey: qk.conversations });
+          }}
+        />
         <Field label="表示名" htmlFor="profile-name" hint="グループのメンバーに表示される名前です">
           <Input id="profile-name" value={currentName} onChange={(e) => setName(e.target.value)} maxLength={50} />
         </Field>
@@ -208,7 +232,7 @@ function GroupNotificationLinks() {
           {groups.map((g) => (
             <li key={g.id}>
               <Link href={`/groups/${g.id}/settings`} className="flex items-center gap-3 px-4 py-3 hover:bg-surface-2">
-                <GroupAvatar name={g.name} color={g.color} size={32} />
+                <GroupAvatar name={g.name} color={g.color} icon={g.icon_path} size={32} />
                 <span className="flex-1 truncate text-[16px]">{g.name}</span>
                 <ChevronRight className="size-4 text-label-4" aria-hidden />
               </Link>

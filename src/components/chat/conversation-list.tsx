@@ -142,7 +142,7 @@ export function ConversationList() {
                   aria-label={`${conversationTitle(c)}${unread ? `、未読${unread}件` : ""}`}
                 >
                   {c.kind === "group" ? (
-                    <GroupAvatar name={c.group_name} color={c.group_color} size={52} />
+                    <GroupAvatar name={c.group_name} color={c.group_color} icon={c.group_icon_path} size={52} />
                   ) : (
                     <Avatar name={c.peer_name} src={c.peer_avatar_url} id={c.peer_id} size={52} />
                   )}

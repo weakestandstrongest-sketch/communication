@@ -6,9 +6,9 @@ An all-in-one communication app for Japanese university clubs, school clubs, cir
 
 It is a browser app (PWA) built for iPhone first. Members open a URL; nothing has to be installed from an app store. The whole interface is in Japanese.
 
-| ホーム | トーク | 投票 | カレンダー | 出欠 |
+| ホーム | トーク | 投票 | 予定 | 出欠 |
 | --- | --- | --- | --- | --- |
-| Things you need to act on: unanswered polls, pending attendance, important announcements | Real-time group and 1:1 chat with read receipts, reactions, replies, photos and files | Filters: すべて / 未回答 / 回答済み / 締切間近 / 終了 | Month, week and list views | 参加 / 不参加 / 未定, with a list of who hasn't answered |
+| LINE-style profile header and search, plus the things you need to act on | Real-time group and 1:1 chat with read receipts, reactions, replies, photos and files | Filters: すべて / 未回答 / 回答済み / 締切間近 / 終了 | カレンダー (pinch to zoom: dots → titles → details, swipe between months) and タイムライン (a day as a vertical flow with free time) | 参加 / 不参加 / 未定, with a list of who hasn't answered |
 
 ---
 
@@ -17,6 +17,7 @@ It is a browser app (PWA) built for iPhone first. Members open a URL; nothing ha
 ### Implemented and tested
 These were verified against a real local Supabase stack with several signed-in test users (see [Testing](#testing)).
 
+- **Look and feel:** a black-and-white, bank-app style design (light and dark), a floating translucent tab bar, and custom profile photos and group icons stored in private storage.
 - **Accounts:** Google sign-in through Supabase Auth (PKCE). Sessions persist. Signed-out users are redirected away from protected routes. A profile is created from the Google name and avatar on first sign-in.
 - **Groups:** create a group, join with an invite link or invite code, regenerate or disable invites, roles (owner / admin / member), promote and demote, transfer ownership, remove members, leave or delete a group. Group settings control whether members may invite, create polls, create events or post announcements.
 - **Chat:**
@@ -32,8 +33,8 @@ These were verified against a real local Supabase stack with several signed-in t
   - Single or multiple choice, optional free-text answers, anonymous voting, deadlines, and manual close or reopen.
   - You choose whether answers can be changed, and when results are visible: always, after voting, after closing, or admins only.
   - A non-respondent list for non-anonymous polls.
-- **Calendar and attendance:**
-  - Month, week and list views, event categories, all-day events, location (with a map link), an optional event image, and an attendance deadline.
+- **予定 (calendar, timeline and attendance):**
+  - A month calendar with three pinch-zoom levels, a rolling month number with 和風月名, Japanese public holidays, and a Structured-style day timeline with free-time gaps and a "now" line. Also event categories, all-day events, location (with a map link), an optional event image, and an attendance deadline.
   - Attendance comments, with individual answers visible to all members or to admins only.
   - Cancel or restore events, and download an `.ics` file for the phone's calendar.
 - **Announcements:** important (重要) and pinned announcements, read tracking (既読 N/M), optional links to a poll or event, edit and delete.
@@ -98,9 +99,11 @@ Google sign-in needs OAuth credentials, even locally; see [docs/SETUP.md](docs/S
 | --- | --- |
 | `tests/integration/security.test.ts` | 28 tests: profiles, membership and roles, invites, idempotent sends, unread counts, edit and delete permissions, reactions, mention and reply notifications, DM restrictions, poll rules (single choice, answer changes, closing, anonymity, result visibility), events and attendance (visibility, deadlines, no duplicates), announcements (posting and pinning permissions, read counts), notification privacy, push subscription ownership, reminders, storage isolation and attachment validation |
 | `tests/integration/realtime.test.ts` | Realtime only delivers to members, deletions don't leak to outsiders, and only conversation members can join private typing/presence channels |
+| `tests/e2e/design.mjs` | 13 browser steps: floating tab bar, LINE-style home and search, calendar zoom (buttons and a real two-finger pinch), month roll and swipe, holidays, timeline, profile photo and group icon upload |
+| `tests/integration/icons.test.ts` | 6 tests: who can upload or read profile photos and group icons |
 | `tests/e2e/journey.mjs` | 26 browser steps with 4 users (iPhone and desktop viewports), covering the full journey in the requirements, including offline send and retry, outsider access, 320px screens, history paging, dark mode, and push delivery and decryption |
 
-Latest run: **31/31 integration tests and 26/26 end-to-end steps passed**, along with `npm run lint`, `npm run typecheck` and `npm run build`.
+Latest run: **37/37 integration tests, 26/26 journey steps and 13/13 design steps passed**, along with `npm run lint`, `npm run typecheck` and `npm run build`.
 
 ## Project structure
 
