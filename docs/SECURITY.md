@@ -33,6 +33,14 @@
 
 These rules are covered by `tests/integration/security.test.ts`, which uses four real users (owner, admin, member and outsider) and tries the forbidden operations directly against the API, not through the UI.
 
+## Anonymous suggestion box (意見箱)
+
+- `feedback_posts` and `feedback_replies` have **no author column**. Authors, per-thread aliases and likes live in tables in the `private` schema, which the API cannot reach; only SECURITY DEFINER functions read them, and they return a `mine` flag instead of an author id. The tables are published to Realtime for live updates, and their rows identify nobody.
+- Notifications about the suggestion box have `actor_id = null`. The post author is not notified about their own post. Only the author is notified about replies, without naming the replier.
+- Admins can delete any post or reply (moderation) but cannot see who wrote it. Authors can delete their own. There is no editing, since that would need an identity check on every edit.
+- Anti-spam: 10 posts and 40 replies per person per hour.
+- **Limits of anonymity:** the project owner (who can open the Supabase dashboard) can read the `private` tables. A group with only two or three members may be able to guess an author from the content or timing. Members should be told that this is anonymous to other members and admins, not to the database owner.
+
 ## Anonymous polls
 
 - Raw `poll_votes` and `poll_responses` rows are readable **only by the voter**, even for admins.

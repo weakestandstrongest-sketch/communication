@@ -137,19 +137,26 @@ await step("calendar zoom responds to a two-finger pinch", async () => {
   const cdp = await ctxA.newCDPSession(A);
   const grid = A.locator("[data-zoom]");
   await A.getByRole("button", { name: "縮小" }).click();
+  await A.waitForTimeout(500); // wait for the cells to finish resizing
   const box = await grid.boundingBox();
   const cx = box.x + box.width / 2;
   const cy = box.y + box.height / 2;
   const touch = async (type, pts) => cdp.send("Input.dispatchTouchEvent", { type, touchPoints: pts.map(([x, y], id) => ({ x, y, id })) });
   // spread fingers apart
   await touch("touchStart", [[cx - 30, cy], [cx + 30, cy]]);
-  for (let d = 30; d <= 45; d += 5) await touch("touchMove", [[cx - d, cy], [cx + d, cy]]);
+  for (let d = 30; d <= 38; d += 2) {
+    await touch("touchMove", [[cx - d, cy], [cx + d, cy]]);
+    await A.waitForTimeout(30);
+  }
   await touch("touchEnd", []);
   await A.waitForTimeout(300);
   if ((await grid.getAttribute("data-zoom")) !== "1") throw new Error(`pinch-out should zoom in, got ${await grid.getAttribute("data-zoom")}`);
   // pinch together
   await touch("touchStart", [[cx - 110, cy], [cx + 110, cy]]);
-  for (let d = 110; d >= 20; d -= 10) await touch("touchMove", [[cx - d, cy], [cx + d, cy]]);
+  for (let d = 110; d >= 20; d -= 10) {
+    await touch("touchMove", [[cx - d, cy], [cx + d, cy]]);
+    await A.waitForTimeout(30);
+  }
   await touch("touchEnd", []);
   await A.waitForTimeout(300);
   if ((await grid.getAttribute("data-zoom")) !== "0") throw new Error(`pinch-in should zoom out, got ${await grid.getAttribute("data-zoom")}`);
@@ -271,6 +278,128 @@ await step("settings screens look right (light and dark)", async () => {
   await B.getByRole("button", { name: "拡大" }).click();
   await B.waitForTimeout(500);
   await shot(B, "d12-calendar-zoom2-dark");
+});
+
+await step("calendar header shows the year to the right of 「10月」, not above 月", async () => {
+  await A.goto(`${APP_URL}/calendar`);
+  const heading = A.getByRole("heading", { level: 2, name: new RegExp(`^${Y}年${M + 1}月$`) });
+  await heading.waitFor();
+  const parts = await heading.evaluate((el) => [...el.children].map((c) => { const b = c.getBoundingClientRect(); return { text: c.textContent.trim(), left: b.left, right: b.right, bottom: b.bottom }; }));
+  const [num, month, year] = parts;
+  if (!(month.left >= num.right - 2 && year.left >= month.right - 2)) throw new Error(`order is wrong: ${JSON.stringify(parts)}`);
+  if (Math.abs(year.bottom - month.bottom) > 6) throw new Error(`year is not on the same line as 月: ${JSON.stringify(parts)}`);
+  if (year.text !== `${Y}年` || month.text !== "月") throw new Error(JSON.stringify(parts));
+});
+
+await step("tab bar highlight slides to the tapped tab with a jelly stretch", async () => {
+  await A.goto(APP_URL);
+  const nav = A.getByRole("navigation", { name: "メインナビゲーション" });
+  const hl = nav.locator("ul > span").first();
+  await hl.waitFor({ state: "attached" });
+  await A.waitForTimeout(900);
+  const x0 = (await hl.boundingBox()).x;
+  await nav.getByRole("link", { name: /投票/ }).click();
+  await A.waitForURL(/\/polls/);
+  // during the move the inner element runs the jelly animation
+  const animName = await hl.locator("span").evaluate((el) => getComputedStyle(el).animationName);
+  if (!/jelly/.test(animName)) throw new Error(`no jelly animation: ${animName}`);
+  await A.waitForTimeout(1000);
+  const x1 = (await hl.boundingBox()).x;
+  const tab = await nav.getByRole("link", { name: /投票/ }).boundingBox();
+  if (x1 - x0 < 100) throw new Error(`highlight did not move (${x0} → ${x1})`);
+  if (Math.abs(x1 - (tab.x)) > 10) throw new Error(`highlight not under the tapped tab (${x1} vs ${tab.x})`);
+  await shot(A, "d13-tabbar-polls");
+});
+
+await step("意見箱: post anonymously, thread replies get aliases, likes, moderation", async () => {
+  const leaked = [];
+  for (const [label, p] of [["A", A], ["B", B]]) {
+    p.on("response", async (r) => {
+      if (!/\/rest\/v1\/rpc\/(list_feedback|get_feedback_thread)/.test(r.url())) return;
+      const body = await r.text().catch(() => "");
+      for (const id of [owner.id, member.id]) if (body.includes(id)) leaked.push(`${label}: ${r.url()} contains ${id}`);
+    });
+  }
+  // entry points
+  await A.goto(`${APP_URL}/groups/${groupId}`);
+  await A.getByRole("link", { name: "意見箱" }).click();
+  await A.waitForURL(/\/feedback$/);
+  await A.getByText("投稿者は誰にも（管理者にも）表示されません").waitFor();
+  await A.getByText("まだ意見はありません").waitFor();
+  // member posts
+  await B.goto(`${APP_URL}/groups/${groupId}/feedback`);
+  await B.getByRole("button", { name: /いま思っていること/ }).click();
+  const dialog = B.getByRole("dialog", { name: "匿名で意見を投稿" });
+  await dialog.getByLabel("意見・感想").fill("Autumn Leaves のイントロ、ベースとドラムがずれている気がします");
+  await dialog.getByLabel(/お題・曲名/).fill("Autumn Leaves");
+  await dialog.getByRole("button", { name: "匿名で投稿する" }).click();
+  await B.waitForURL(/\/feedback\/[0-9a-f-]{36}$/);
+  const postUrl = B.url();
+  await B.getByLabel("元の投稿").getByText("Autumn Leaves のイントロ").waitFor();
+  await B.getByLabel("元の投稿").getByText("あなた").waitFor();
+  await shot(B, "d14-feedback-thread-dark");
+  // the owner sees it appear in the feed in real time, anonymously
+  await A.getByRole("article", { name: "匿名の意見" }).getByText("Autumn Leaves のイントロ").waitFor({ timeout: 10000 });
+  if (await A.getByRole("article", { name: "匿名の意見" }).getByText("伊藤 健").count()) throw new Error("author name visible");
+  if (await A.getByRole("article", { name: "匿名の意見" }).getByText("あなた").count()) throw new Error("A should not be marked as author");
+  await shot(A, "d15-feedback-feed");
+  // owner replies from the thread → alias 匿名A; the poster sees it and replies as スレ主
+  await A.goto(postUrl);
+  await A.getByLabel("匿名で返信").fill("確かに。次の練習でテンポを合わせよう");
+  await A.getByRole("button", { name: "返信を送信" }).click();
+  await A.getByRole("article", { name: "匿名Aの返信" }).waitFor({ timeout: 10000 });
+  await B.getByRole("article", { name: "匿名Aの返信" }).waitFor({ timeout: 10000 });
+  await B.getByLabel("匿名で返信").fill("ありがとうございます！");
+  await B.getByRole("button", { name: "返信を送信" }).click();
+  await B.getByRole("article", { name: "スレ主の返信" }).getByText("ありがとうございます！").waitFor({ timeout: 10000 });
+  await A.getByRole("article", { name: "スレ主の返信" }).waitFor({ timeout: 10000 });
+  await shot(A, "d16-feedback-thread");
+  // like
+  await A.getByLabel("元の投稿").getByRole("button", { name: /いいね 0件/ }).click();
+  await A.getByLabel("元の投稿").getByRole("button", { name: /いいね 1件、いいね済み/ }).waitFor();
+  await B.getByLabel("元の投稿").getByRole("button", { name: /いいね 1件$/ }).waitFor({ timeout: 10000 });
+  // the poster got an in-app notification about the reply, without a name
+  await B.goto(`${APP_URL}/notifications`);
+  await B.getByText("あなたの意見に返信がありました").waitFor();
+  // topic filter
+  await A.goto(`${APP_URL}/groups/${groupId}/feedback`);
+  await A.getByRole("tab", { name: /♪ Autumn Leaves/ }).click();
+  await A.getByRole("article", { name: "匿名の意見" }).getByText("Autumn Leaves のイントロ").waitFor();
+  // admin moderation (without learning who wrote it) and author delete
+  await B.goto(`${APP_URL}/groups/${groupId}/feedback`);
+  await B.getByRole("button", { name: /いま思っていること/ }).click();
+  await B.getByRole("dialog").getByLabel("意見・感想").fill("削除テスト用の投稿");
+  await B.getByRole("dialog").getByRole("button", { name: "匿名で投稿する" }).click();
+  await B.waitForURL(/\/feedback\/[0-9a-f-]{36}$/);
+  await A.goto(`${APP_URL}/groups/${groupId}/feedback`);
+  const target = A.getByRole("article", { name: "匿名の意見" }).filter({ hasText: "削除テスト用の投稿" });
+  await target.getByRole("button", { name: "メニュー" }).click();
+  await A.getByRole("button", { name: "管理者として削除" }).click();
+  await A.getByRole("button", { name: "削除", exact: true }).click();
+  await A.getByText("投稿を削除しました").waitFor();
+  if (await A.getByText("削除テスト用の投稿").count()) throw new Error("moderated post still visible");
+  await B.goto(`${APP_URL}/groups/${groupId}/feedback`);
+  const own = B.getByRole("article", { name: "匿名の意見" }).filter({ hasText: "Autumn Leaves のイントロ" });
+  await own.getByRole("button", { name: "メニュー" }).click();
+  await B.getByRole("button", { name: "自分の投稿を削除" }).click();
+  await B.getByRole("button", { name: "削除", exact: true }).click();
+  await B.getByText("投稿を削除しました").waitFor();
+  if (leaked.length) throw new Error(`author ids leaked in responses:\n${leaked.join("\n")}`);
+});
+
+await step("意見箱 fits a 320px screen", async () => {
+  const ctx = await browser.newContext({ viewport: { width: 320, height: 640 }, isMobile: true, hasTouch: true, locale: "ja-JP" });
+  const { sessionCookies } = await import("./session.mjs");
+  await ctx.addCookies(sessionCookies(member.session));
+  const p = await ctx.newPage();
+  await member.client.rpc("create_feedback_post", { p_group_id: groupId, p_body: "とても長い意見です。".repeat(30), p_topic: "とても長いお題の名前をつけてみるテスト" });
+  await p.goto(`${APP_URL}/groups/${groupId}/feedback`);
+  await p.getByRole("article", { name: "匿名の意見" }).first().waitFor();
+  await p.waitForTimeout(600);
+  const over = await p.evaluate(() => document.documentElement.scrollWidth - 320);
+  if (over > 1) throw new Error(`feed overflows by ${over}px`);
+  await shot(p, "d17-feedback-320");
+  await ctx.close();
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

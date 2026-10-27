@@ -29,6 +29,7 @@ These were verified against a real local Supabase stack with several signed-in t
   - Older messages load in pages without losing your scroll position.
   - 1:1 chats with anyone who shares one of your groups.
 - **Cards in chat:** polls, events/attendance requests, announcements and albums appear as live cards in the group chat. Every card points to the same database record as its full screen, so nothing is duplicated and edits show up everywhere.
+- **意見箱 (anonymous suggestion box):** a Threads/X-style feed per group where members post feedback ("この曲のここが…") with an optional topic or song name, reply in threads, and like. Nobody can see who wrote anything, including admins; replies get stable aliases (スレ主, 匿名A, 匿名B …). Authors can delete their own posts and admins can moderate. See [docs/SECURITY.md](docs/SECURITY.md#anonymous-suggestion-box-意見箱).
 - **Polls:**
   - Single or multiple choice, optional free-text answers, anonymous voting, deadlines, and manual close or reopen.
   - You choose whether answers can be changed, and when results are visible: always, after voting, after closing, or admins only.
@@ -99,11 +100,12 @@ Google sign-in needs OAuth credentials, even locally; see [docs/SETUP.md](docs/S
 | --- | --- |
 | `tests/integration/security.test.ts` | 28 tests: profiles, membership and roles, invites, idempotent sends, unread counts, edit and delete permissions, reactions, mention and reply notifications, DM restrictions, poll rules (single choice, answer changes, closing, anonymity, result visibility), events and attendance (visibility, deadlines, no duplicates), announcements (posting and pinning permissions, read counts), notification privacy, push subscription ownership, reminders, storage isolation and attachment validation |
 | `tests/integration/realtime.test.ts` | Realtime only delivers to members, deletions don't leak to outsiders, and only conversation members can join private typing/presence channels |
-| `tests/e2e/design.mjs` | 13 browser steps: floating tab bar, LINE-style home and search, calendar zoom (buttons and a real two-finger pinch), month roll and swipe, holidays, timeline, profile photo and group icon upload |
+| `tests/e2e/design.mjs` | 17 browser steps: floating tab bar with a jelly highlight, 意見箱 end to end (including a check that API responses never contain an author id), LINE-style home and search, calendar zoom (buttons and a real two-finger pinch), month roll and swipe, holidays, timeline, profile photo and group icon upload |
+| `tests/integration/feedback.test.ts` | 9 tests: authors are never exposed (members, admins, direct table access, notifications), stable aliases, permissions, moderation, cascading deletes, likes, topics, paging, rate limits |
 | `tests/integration/icons.test.ts` | 6 tests: who can upload or read profile photos and group icons |
 | `tests/e2e/journey.mjs` | 26 browser steps with 4 users (iPhone and desktop viewports), covering the full journey in the requirements, including offline send and retry, outsider access, 320px screens, history paging, dark mode, and push delivery and decryption |
 
-Latest run: **37/37 integration tests, 26/26 journey steps and 13/13 design steps passed**, along with `npm run lint`, `npm run typecheck` and `npm run build`.
+Latest run: **46/46 integration tests, 26/26 journey steps and 17/17 design steps passed**, along with `npm run lint`, `npm run typecheck` and `npm run build`.
 
 ## Project structure
 

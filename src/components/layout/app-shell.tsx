@@ -52,26 +52,40 @@ function useNavItems(): NavItem[] {
 function TabBar() {
   const pathname = usePathname();
   const items = useNavItems();
+  const activeIndex = items.findIndex((item) => item.match(pathname));
   // The conversation screen uses the full height for messages and the composer.
-  const hidden = /^\/talk\/.+/.test(pathname) || /\/(new|edit)$/.test(pathname);
+  const hidden = /^\/talk\/.+/.test(pathname) || /\/(new|edit)$/.test(pathname) || /\/feedback\/[^/]+$/.test(pathname);
   if (hidden) return null;
   return (
     <nav
       aria-label="メインナビゲーション"
       className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-3 pb-[max(10px,env(safe-area-inset-bottom))] lg:hidden"
     >
-      <ul className="glass-bar pointer-events-auto flex h-[64px] w-[min(28rem,calc(100vw-1.5rem))] items-stretch gap-0 rounded-[32px] p-1">
-        {items.map((item) => {
-          const active = item.match(pathname);
+      <ul className="glass-bar pointer-events-auto relative flex h-[64px] w-[min(28rem,calc(100vw-1.5rem))] items-stretch gap-0 rounded-[32px] p-1">
+        {/* 選んだタブへ、伸び縮みしながら滑っていく丸いハイライト */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-y-1 left-1"
+          style={{
+            width: `calc((100% - 8px) / ${items.length})`,
+            transform: `translateX(${Math.max(activeIndex, 0) * 100}%)`,
+            opacity: activeIndex < 0 ? 0 : 1,
+            transition: "transform 620ms cubic-bezier(0.34, 1.45, 0.5, 1), opacity 200ms",
+          }}
+        >
+          <span key={activeIndex} className="animate-jelly block size-full rounded-full bg-label/[0.1] shadow-[inset_0_0_0_0.5px_var(--separator-strong)]" />
+        </span>
+        {items.map((item, index) => {
+          const active = index === activeIndex;
           const Icon = item.icon;
           return (
-            <li key={item.href} className="min-w-0 flex-1">
+            <li key={item.href} className="relative min-w-0 flex-1">
               <Link
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative flex h-full min-w-0 flex-col items-center justify-center gap-0.5 rounded-full text-[10px] font-semibold transition-all duration-200 active:scale-95",
-                  active ? "bg-label/[0.09] text-label" : "text-label-3",
+                  "relative flex h-full min-w-0 flex-col items-center justify-center gap-0.5 rounded-full text-[10px] font-semibold transition-[color,transform] duration-200 active:scale-90",
+                  active ? "text-label" : "text-label-3",
                 )}
               >
                 <span className="relative">

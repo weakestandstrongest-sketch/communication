@@ -6,6 +6,7 @@ import {
   Bell,
   CalendarCheck2,
   Images,
+  MessageSquareQuote,
   Pencil,
   Search,
   Settings,
@@ -262,12 +263,13 @@ export default function HomePage() {
             </section>
 
             <section aria-label="かんたん操作">
-              <ul className="grid grid-cols-4 gap-2">
+              <ul className="grid grid-cols-5 gap-1">
                 {[
                   { href: "/polls/new", label: "投票を作成", icon: Vote },
                   { href: "/events/new", label: "予定を作成", icon: CalendarDays },
                   { href: "/announcements/new", label: "お知らせ", icon: Megaphone },
                   { href: `/groups/${groups[0]?.id ?? ""}/albums`, label: "写真", icon: Images },
+                  { href: `/groups/${groups[0]?.id ?? ""}/feedback`, label: "意見箱", icon: MessageSquareQuote },
                 ].map(({ href, label, icon: Icon }) => (
                   <li key={label}>
                     <Link href={href} className="flex flex-col items-center gap-2 rounded-2xl py-3 active:bg-surface">

@@ -8,6 +8,8 @@ All schema changes are SQL migrations in `supabase/migrations/`, applied in file
 | `20261026000002_security.sql` | RLS helper functions, profile creation from Google metadata, group-chat membership sync, counter and cache triggers, **all RLS policies and grants** |
 | `20261026000003_functions.sql` | RPCs: groups, invites, roles, conversations and messages, polls, events and attendance, announcements, sharing to chat, push registration |
 | `20261026000004_notifications.sql` | Notification fan-out triggers, mention and reply notifications, pg_net push dispatch, `private.process_reminders()` plus the pg_cron schedule |
+| `20261027000001_icons.sql` | Profile photos and group icons (`groups.icon_path`, storage rules, path guards, `get_conversations` returns the group icon) |
+| `20261027000002_feedback.sql` | 意見箱: `feedback_posts`, `feedback_replies`, private author / alias / like tables and the RPCs |
 | `20261026000005_storage_realtime.sql` | Private `media` bucket and its policies, Realtime publication, private-channel policies |
 
 `src/lib/database.types.ts` is generated from the schema (`npm run db:types`).

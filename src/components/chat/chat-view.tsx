@@ -125,6 +125,8 @@ export function ChatView({ conversationId }: { conversationId: string }) {
   const [viewer, setViewer] = useState<{ items: ViewerItem[]; index: number } | null>(null);
   const [info, setInfo] = useState(false);
   const [highlight, setHighlight] = useState<string | null>(null);
+  // Only messages that arrive after the screen was opened get the entrance animation.
+  const [openedAt] = useState(() => Date.now());
   const [typing, setTyping] = useState<Record<string, number>>({});
   const [online, setOnline] = useState<Set<string>>(new Set());
   const typingChannel = useRef<ReturnType<ReturnType<typeof getSupabase>["channel"]> | null>(null);
@@ -537,14 +539,9 @@ export function ChatView({ conversationId }: { conversationId: string }) {
                     readCount={m.sender_id === myId ? readCount(m) : 0}
                     memberCount={members?.length ?? 0}
                     myId={myId}
-                    replyTo={
-                      m.reply_to_id
-                        ? {
-                            sender: reply?.sender_id ? (people.get(reply.sender_id)?.name ?? "メンバー") : "メッセージ",
-                            text: reply ? previewText(reply) : "以前のメッセージ",
-                          }
-                        : null
-                    }
+                    replySender={m.reply_to_id ? (reply?.sender_id ? (people.get(reply.sender_id)?.name ?? "メンバー") : "メッセージ") : null}
+                    replyText={m.reply_to_id ? (reply ? previewText(reply) : "以前のメッセージ") : null}
+                    isNew={new Date(m.created_at).getTime() >= openedAt - 1000}
                     mentionNames={mentionNames}
                     highlighted={highlight === m.id}
                     onActions={setActionsFor}

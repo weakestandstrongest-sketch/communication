@@ -87,6 +87,8 @@ const PREF_FOR_KIND: Record<string, "polls" | "events" | "announcements" | "ment
   announcement: "announcements",
   mention: "mentions",
   reply: "mentions",
+  feedback_reply: "mentions",
+  feedback_new: null,
   member_joined: null,
 };
 

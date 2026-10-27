@@ -19,6 +19,8 @@
 | Poll closes within 24 h and you haven't answered | ✓ `poll_deadline` | ✓ | Members who haven't answered (once per poll) |
 | Event starts within 24 h | ✓ `event_upcoming` | ✓ | Members who answered 参加 or 未定, or haven't answered (once per event time) |
 | Attendance deadline within 24 h | ✓ `attendance_deadline` | ✓ | Members who haven't answered (once per event) |
+| New 意見箱 post | ✓ `feedback_new` (no actor) | — | Group members except the author |
+| Reply to your 意見箱 post | ✓ `feedback_reply` (no actor) | ✓ (counts as 「メンション・返信」) | The post author only |
 | A new member joins | ✓ `member_joined` | — | Owner and admins |
 
 Duplicates are prevented by a `dedupe_key` column with a unique index. Nobody is notified about their own actions. Reminders come from `private.process_reminders()`, which pg_cron runs every 15 minutes. That job also deletes notifications older than 90 days.

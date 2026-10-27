@@ -127,6 +127,16 @@
     from { transform: translateX(calc(var(--dir, 1) * 36px)); opacity: 0; }
     to { transform: translateX(0); opacity: 1; }
   }
+  --animate-jelly: jelly 560ms cubic-bezier(0.3, 0.9, 0.4, 1) both;
+
+  /* タブの丸いハイライトが、伸びて縮むぷにぷにした動き */
+  @keyframes jelly {
+    0% { transform: scale(1, 1); }
+    28% { transform: scale(1.32, 0.84); }
+    58% { transform: scale(0.94, 1.1); }
+    80% { transform: scale(1.03, 0.98); }
+    100% { transform: scale(1, 1); }
+  }
   @keyframes fade-in {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -197,16 +207,17 @@
   .mb-safe { margin-bottom: env(safe-area-inset-bottom); }
   .h-tabbar { height: calc(56px + env(safe-area-inset-bottom)); }
   .pb-tabbar { padding-bottom: calc(104px + env(safe-area-inset-bottom)); }
+  /* ぼかしは描画が重いので、ヘッダーなどはほぼ不透明の背景にする（タブバーだけぼかす） */
   .glass {
-    background: var(--elevated);
-    -webkit-backdrop-filter: saturate(180%) blur(22px);
-    backdrop-filter: saturate(180%) blur(22px);
+    background: color-mix(in srgb, var(--bg) 94%, transparent);
   }
   /* 下のタブバー: 透明感のある丸いガラス */
   .glass-bar {
     background: color-mix(in srgb, var(--bg) 58%, transparent);
-    -webkit-backdrop-filter: saturate(200%) blur(28px);
-    backdrop-filter: saturate(200%) blur(28px);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    transform: translateZ(0);
+    will-change: transform;
     box-shadow: 0 8px 32px hsl(var(--shadow-color) / 0.14), inset 0 0 0 0.5px var(--separator-strong), inset 0 1px 0 rgba(255, 255, 255, 0.35);
   }
   .hairline-b { box-shadow: inset 0 -0.5px 0 var(--separator-strong); }

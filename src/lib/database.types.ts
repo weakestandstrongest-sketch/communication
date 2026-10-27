@@ -217,6 +217,52 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"feedback_posts": {
+                  Row: {
+                    "body": string,"created_at": string,"group_id": string,"id": string,"like_count": number,"reply_count": number,"topic": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "body": string,"created_at"?: string,"group_id": string,"id"?: string,"like_count"?: number,"reply_count"?: number,"topic"?: string | null
+                  }
+                  Update: {
+                    "body"?: string,"created_at"?: string,"group_id"?: string,"id"?: string,"like_count"?: number,"reply_count"?: number,"topic"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "feedback_posts_group_id_fkey"
+      columns: ["group_id"]
+isOneToOne: false
+      referencedRelation: "groups"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"feedback_replies": {
+                  Row: {
+                    "alias_no": number,"body": string,"created_at": string,"group_id": string,"id": string,"like_count": number,"post_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "alias_no": number,"body": string,"created_at"?: string,"group_id": string,"id"?: string,"like_count"?: number,"post_id": string
+                  }
+                  Update: {
+                    "alias_no"?: number,"body"?: string,"created_at"?: string,"group_id"?: string,"id"?: string,"like_count"?: number,"post_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "feedback_replies_group_id_fkey"
+      columns: ["group_id"]
+isOneToOne: false
+      referencedRelation: "groups"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "feedback_replies_post_id_fkey"
+      columns: ["post_id"]
+isOneToOne: false
+      referencedRelation: "feedback_posts"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"group_invites": {
                   Row: {
                     "code": string,"enabled": boolean,"group_id": string,"updated_at": string
@@ -652,11 +698,20 @@ isOneToOne: true
 "create_event":
 { Args: { "p_all_day"?: boolean,"p_attendance_visibility"?: string,"p_category"?: Database["public"]['Enums']["event_category"],"p_description"?: string,"p_ends_at"?: string,"p_group_id": string,"p_image_path"?: string,"p_location"?: string,"p_post_to_chat"?: boolean,"p_rsvp_deadline"?: string,"p_rsvp_enabled"?: boolean,"p_starts_at": string,"p_title": string }; Returns: string
                            },
+"create_feedback_post":
+{ Args: { "p_body": string,"p_group_id": string,"p_topic"?: string }; Returns: string
+                           },
+"create_feedback_reply":
+{ Args: { "p_body": string,"p_post_id": string }; Returns: string
+                           },
 "create_group":
 { Args: { "p_color"?: string,"p_description"?: string,"p_name": string }; Returns: string
                            },
 "create_poll":
 { Args: { "p_allow_change"?: boolean,"p_allow_free_text"?: boolean,"p_anonymous"?: boolean,"p_deadline"?: string,"p_description"?: string,"p_group_id": string,"p_multiple"?: boolean,"p_options": (string)[],"p_post_to_chat"?: boolean,"p_result_visibility"?: Database["public"]['Enums']["poll_result_visibility"],"p_title": string }; Returns: string
+                           },
+"delete_feedback":
+{ Args: { "p_id": string,"p_kind": string }; Returns: undefined
                            },
 "delete_message":
 { Args: { "p_message_id": string }; Returns: (string)[]
@@ -690,6 +745,11 @@ isOneToOne: true
 "event_group_id":
 { Args: { "p_event_id": string }; Returns: string
                            },
+"feedback_topics":
+{ Args: { "p_group_id": string }; Returns: {
+              "post_count": number,"topic": string
+            }[]
+                           },
 "generate_invite_code":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
@@ -703,6 +763,9 @@ isOneToOne: true
                            },
 "get_event_attendance":
 { Args: { "p_event_id": string }; Returns: Json
+                           },
+"get_feedback_thread":
+{ Args: { "p_post_id": string }; Returns: Json
                            },
 "get_or_create_direct":
 { Args: { "p_user_id": string }; Returns: string
@@ -727,6 +790,11 @@ isOneToOne: true
                            },
 "leave_group":
 { Args: { "p_group_id": string }; Returns: undefined
+                           },
+"list_feedback":
+{ Args: { "p_before"?: string,"p_group_id": string,"p_limit"?: number,"p_sort"?: string,"p_topic"?: string }; Returns: {
+              "body": string,"created_at": string,"group_id": string,"id": string,"like_count": number,"liked": boolean,"mine": boolean,"reply_count": number,"topic": string
+            }[]
                            },
 "list_polls":
 { Args: { "p_group_id"?: string }; Returns: {
@@ -805,6 +873,9 @@ isOneToOne: true
                            },
 "submit_poll_response":
 { Args: { "p_free_text"?: string,"p_option_ids": (string)[],"p_poll_id": string }; Returns: undefined
+                           },
+"toggle_feedback_like":
+{ Args: { "p_id": string,"p_kind": string }; Returns: boolean
                            },
 "toggle_reaction":
 { Args: { "p_emoji": string,"p_message_id": string }; Returns: boolean

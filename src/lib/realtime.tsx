@@ -82,6 +82,9 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     on("events", (row) => invalidate(qk.events, qk.event(row.id as string), qk.attendance(row.id as string)));
     on("event_attendance", (row) => invalidate(qk.myAttendance, qk.attendance(row.event_id as string)));
     on("announcements", (row) => invalidate(qk.announcements, qk.announcement(row.id as string)));
+    // 意見箱: these rows carry no author, so they are safe to publish.
+    on("feedback_posts", () => invalidate(["feedback"], ["feedbackThread"], ["feedbackTopics"]));
+    on("feedback_replies", () => invalidate(["feedbackThread"], ["feedback"]));
     on("group_members", () => invalidate(qk.groups, qk.members, qk.conversations, qk.polls));
 
     channel

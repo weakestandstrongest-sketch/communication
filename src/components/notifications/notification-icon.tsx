@@ -1,4 +1,4 @@
-import { AtSign, CalendarCheck2, CalendarClock, CalendarX2, CalendarDays, Clock, CornerUpLeft, Megaphone, UserPlus, Vote } from "lucide-react";
+import { MessageSquareQuote, AtSign, CalendarCheck2, CalendarClock, CalendarX2, CalendarDays, Clock, CornerUpLeft, Megaphone, UserPlus, Vote } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 const MAP: Record<string, { icon: typeof Vote; className: string }> = {
@@ -13,6 +13,8 @@ const MAP: Record<string, { icon: typeof Vote; className: string }> = {
   announcement: { icon: Megaphone, className: "bg-danger-soft text-danger" },
   mention: { icon: AtSign, className: "bg-accent-soft text-accent" },
   reply: { icon: CornerUpLeft, className: "bg-accent-soft text-accent" },
+  feedback_new: { icon: MessageSquareQuote, className: "bg-accent-soft text-accent" },
+  feedback_reply: { icon: MessageSquareQuote, className: "bg-accent-soft text-accent" },
   member_joined: { icon: UserPlus, className: "bg-success-soft text-success" },
 };
 

@@ -10,6 +10,7 @@ import {
   Link2,
   Megaphone,
   MessageCircle,
+  MessageSquareQuote,
   Pin,
   Plus,
   RefreshCw,
@@ -107,7 +108,7 @@ function GroupDetail() {
             メンバー {members?.length ?? "-"}人 ・ あなたは{ROLE_LABEL[group.my_role]}
           </p>
           {group.description && <p className="mx-auto mt-2 max-w-md text-[14px] leading-relaxed whitespace-pre-wrap text-label-2">{group.description}</p>}
-          <div className="mt-4 grid grid-cols-3 gap-2">
+          <div className="mt-4 grid grid-cols-4 gap-2">
             <Link href={chat ? `/talk/${chat.id}` : "/talk"} className="flex flex-col items-center gap-1 rounded-2xl bg-accent-soft py-3 text-[12px] font-semibold text-accent">
               <MessageCircle className="size-5" aria-hidden />
               トーク
@@ -119,6 +120,10 @@ function GroupDetail() {
             <Link href={`/groups/${id}/albums`} className="flex flex-col items-center gap-1 rounded-2xl bg-accent-soft py-3 text-[12px] font-semibold text-accent">
               <Images className="size-5" aria-hidden />
               写真
+            </Link>
+            <Link href={`/groups/${id}/feedback`} className="flex flex-col items-center gap-1 rounded-2xl bg-accent-soft py-3 text-[12px] font-semibold text-accent">
+              <MessageSquareQuote className="size-5" aria-hidden />
+              意見箱
             </Link>
           </div>
         </Card>

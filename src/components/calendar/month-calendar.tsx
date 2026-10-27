@@ -70,7 +70,6 @@ export function MonthCalendar({
     };
     const onMoveTouch = (e: TouchEvent) => {
       if (e.touches.length !== 2 || !startDist) return;
-      e.preventDefault();
       const ratio = dist(e.touches) / startDist;
       if (ratio > 1.22) {
         step(1);
@@ -92,7 +91,7 @@ export function MonthCalendar({
       }
     };
     el.addEventListener("touchstart", onStart, { passive: true });
-    el.addEventListener("touchmove", onMoveTouch, { passive: false });
+    el.addEventListener("touchmove", onMoveTouch, { passive: true });
     el.addEventListener("touchend", onEnd);
     el.addEventListener("touchcancel", onEnd);
     el.addEventListener("wheel", onWheel, { passive: false });
@@ -111,12 +110,14 @@ export function MonthCalendar({
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-end gap-x-2 gap-y-1">
-        <div className="flex items-end gap-2" role="heading" aria-level={2} aria-label={format(cursor, "yyyy年M月")}>
+        <div className="flex items-end gap-1.5" role="heading" aria-level={2} aria-label={format(cursor, "yyyy年M月")}>
           <RollingNumber value={monthNumber} dir={dir} className="font-[family-name:var(--font-display)] text-[52px] font-bold tracking-tight" />
-          <div className="pb-2 leading-tight" aria-hidden>
-            <p className="text-[13px] font-semibold text-label-3">{cursor.getFullYear()}年</p>
-            <p className="text-[15px] font-bold">月</p>
-          </div>
+          <span className="pb-[9px] text-[24px] leading-none font-bold" aria-hidden>
+            月
+          </span>
+          <span className="pb-[10px] pl-1 text-[15px] leading-none font-semibold text-label-3 tabular" aria-hidden>
+            {cursor.getFullYear()}年
+          </span>
         </div>
         <div className="ml-auto flex items-center gap-0.5 pb-1.5">
           <IconButton label="縮小" size="sm" disabled={zoom === 0} onClick={() => onZoom(Math.max(0, zoom - 1) as ZoomLevel)}>

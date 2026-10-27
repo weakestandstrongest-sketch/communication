@@ -99,7 +99,9 @@ export type MessageItemProps = {
   readCount: number;
   memberCount: number;
   myId: string;
-  replyTo: { sender: string; text: string } | null;
+  replySender: string | null;
+  replyText: string | null;
+  isNew: boolean;
   mentionNames: string[];
   highlighted: boolean;
   onActions: (m: ChatMessage) => void;
@@ -176,11 +178,11 @@ export const MessageItem = memo(function MessageItem(props: MessageItemProps) {
         "max-w-full overflow-hidden",
         radius,
         mine ? "bg-bubble-out text-bubble-out-label" : "bg-bubble-in text-label shadow-[0_1px_1px_rgba(0,0,0,0.04)]",
-        images.length > 0 && !hasText && !props.replyTo && "bg-transparent shadow-none",
+        images.length > 0 && !hasText && props.replySender === null && "bg-transparent shadow-none",
         failed && "opacity-70",
       )}
     >
-      {props.replyTo && (
+      {props.replySender !== null && (
         <button
           type="button"
           onClick={(e) => {
@@ -192,12 +194,12 @@ export const MessageItem = memo(function MessageItem(props: MessageItemProps) {
             mine ? "border-white/70 bg-white/15" : "border-accent bg-surface-3",
           )}
         >
-          <span className="block truncate font-semibold">{props.replyTo.sender}</span>
-          <span className={cn("block truncate", mine ? "text-white/80" : "text-label-2")}>{props.replyTo.text}</span>
+          <span className="block truncate font-semibold">{props.replySender}</span>
+          <span className={cn("block truncate", mine ? "text-white/80" : "text-label-2")}>{props.replyText}</span>
         </button>
       )}
       {images.length > 0 && (
-        <div className={cn(hasText || props.replyTo ? "p-1 pb-0" : "", "w-[min(260px,62vw)]")}>
+        <div className={cn(hasText || props.replySender !== null ? "p-1 pb-0" : "", "w-[min(260px,62vw)]")}>
           <div className={radius + " overflow-hidden"}>
             <ImageGrid items={images} local={m.local?.previews} onOpen={(i) => props.onOpenImages(m, i)} />
           </div>
@@ -228,7 +230,7 @@ export const MessageItem = memo(function MessageItem(props: MessageItemProps) {
         mine ? "justify-end" : "justify-start",
         groupedWithPrev ? "mt-0.5" : "mt-3",
         props.highlighted && "bg-accent-soft",
-        !m.local && "animate-message-in",
+        props.isNew && !m.local && "animate-message-in",
       )}
     >
       {!mine && (
