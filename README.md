@@ -34,7 +34,7 @@ These were verified against a real local Supabase stack with several signed-in t
   - You choose whether answers can be changed, and when results are visible: always, after voting, after closing, or admins only.
   - A non-respondent list for non-anonymous polls.
 - **予定 (calendar, timeline and attendance):**
-  - A month calendar with three pinch-zoom levels, a rolling month number with 和風月名, Japanese public holidays, and a Structured-style day timeline with free-time gaps and a "now" line. Also event categories, all-day events, location (with a map link), an optional event image, and an attendance deadline.
+  - A month calendar with three pinch-zoom levels, a rolling month number, Japanese public holidays, and a Structured-style day timeline with free-time gaps and a "now" line. Also event categories, all-day events, location (with a map link), an optional event image, and an attendance deadline.
   - Attendance comments, with individual answers visible to all members or to admins only.
   - Cancel or restore events, and download an `.ics` file for the phone's calendar.
 - **Announcements:** important (重要) and pinned announcements, read tracking (既読 N/M), optional links to a poll or event, edit and delete.

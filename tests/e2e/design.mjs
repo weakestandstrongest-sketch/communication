@@ -155,14 +155,13 @@ await step("calendar zoom responds to a two-finger pinch", async () => {
   if ((await grid.getAttribute("data-zoom")) !== "0") throw new Error(`pinch-in should zoom out, got ${await grid.getAttribute("data-zoom")}`);
 });
 
-await step("month changes with a rolling number, wafu month name and swipe", async () => {
+await step("month changes with a rolling number and swipe", async () => {
   const ym = (offset) => {
     const d = new Date(Date.UTC(Y, M + offset, 1));
     return `${d.getUTCFullYear()}年${d.getUTCMonth() + 1}月`;
   };
   const label = (offset) => A.getByRole("heading", { level: 2, name: new RegExp(`^${ym(offset)}$`) });
   await label(0).waitFor();
-  await A.getByText(["睦月", "如月", "弥生", "卯月", "皐月", "水無月", "文月", "葉月", "長月", "神無月", "霜月", "師走"][M]).first().waitFor();
   await A.getByRole("button", { name: "次の月" }).click();
   // while rolling, both the old and the new number are in the DOM
   const rolling = await A.locator(".animate-roll-out").count();

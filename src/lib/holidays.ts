@@ -1,12 +1,5 @@
 /** 日本の祝日（1980〜2099年）。振替休日と国民の休日を含みます。 */
 
-const NAMED_MONTHS = ["睦月", "如月", "弥生", "卯月", "皐月", "水無月", "文月", "葉月", "長月", "神無月", "霜月", "師走"];
-
-/** 和風月名（1〜12月） */
-export function wafuMonth(month: number): string {
-  return NAMED_MONTHS[month - 1] ?? "";
-}
-
 function nthMonday(year: number, month: number, n: number): number {
   const first = new Date(year, month - 1, 1).getDay();
   return 1 + ((8 - first) % 7) + (n - 1) * 7;

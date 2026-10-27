@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { addDays, endOfMonth, endOfWeek, format, isSameDay, isSameMonth, isToday, startOfMonth, startOfWeek } from "date-fns";
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
-import { holidayName, wafuMonth } from "@/lib/holidays";
+import { holidayName } from "@/lib/holidays";
 import { formatTime } from "@/lib/format";
 import { useSwipe } from "@/lib/use-swipe";
 import { CATEGORY_COLOR, type EventRow } from "@/lib/types";
@@ -114,8 +114,8 @@ export function MonthCalendar({
         <div className="flex items-end gap-2" role="heading" aria-level={2} aria-label={format(cursor, "yyyy年M月")}>
           <RollingNumber value={monthNumber} dir={dir} className="font-[family-name:var(--font-display)] text-[52px] font-bold tracking-tight" />
           <div className="pb-2 leading-tight" aria-hidden>
-            <p className="text-[11px] font-semibold tracking-[0.18em] text-label-3">{cursor.getFullYear()}年</p>
-            <p className="text-[14px] font-semibold">{wafuMonth(monthNumber)}</p>
+            <p className="text-[13px] font-semibold text-label-3">{cursor.getFullYear()}年</p>
+            <p className="text-[15px] font-bold">月</p>
           </div>
         </div>
         <div className="ml-auto flex items-center gap-0.5 pb-1.5">
