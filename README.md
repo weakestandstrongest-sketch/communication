@@ -106,7 +106,7 @@ Google sign-in needs OAuth credentials, even locally; see [docs/SETUP.md](docs/S
 | `tests/integration/icons.test.ts` | 6 tests: who can upload or read profile photos and group icons |
 | `tests/e2e/journey.mjs` | 26 browser steps with 4 users (iPhone and desktop viewports), covering the full journey in the requirements, including offline send and retry, outsider access, 320px screens, history paging, dark mode, and push delivery and decryption |
 
-Latest run: **52/52 integration tests, 26/26 journey steps and 19/19 design steps passed**, along with `npm run lint`, `npm run typecheck` and `npm run build`.
+Latest run: **53/53 integration tests, 26/26 journey steps and 19/19 design steps passed**, along with `npm run lint`, `npm run typecheck` and `npm run build`.
 
 ## Project structure
 
