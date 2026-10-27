@@ -20,20 +20,16 @@ export function canCreate(group: MyGroup | undefined, what: "poll" | "event" | "
   return group.member_can_post_announcements;
 }
 
-export const PERSONAL = "personal";
-
 export function GroupPicker({
   value,
   onChange,
   groups,
   what,
-  allowPersonal,
 }: {
   value: string;
   onChange: (v: string) => void;
   groups: MyGroup[];
   what: "poll" | "event" | "announcement";
-  allowPersonal?: boolean;
 }) {
   return (
     <Field label="グループ" htmlFor="group-picker">
@@ -41,7 +37,6 @@ export function GroupPicker({
         <option value="" disabled>
           グループを選択
         </option>
-        {allowPersonal && <option value={PERSONAL}>自分だけ（個人の予定）</option>}
         {groups.map((g) => (
           <option key={g.id} value={g.id} disabled={!canCreate(g, what)}>
             {g.name}

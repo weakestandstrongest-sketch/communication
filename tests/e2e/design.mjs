@@ -452,23 +452,22 @@ await step("header buttons are gone; 予定 and 投票 have a round + button at 
   await A.getByLabel("質問").waitFor();
 });
 
-await step("a personal event can be created from the calendar and is private to its owner", async () => {
+await step("creating an event returns to the calendar on its day (no personal option any more)", async () => {
   await A.goto(`${APP_URL}/calendar`);
-  await A.getByRole("tab", { name: "個人" }).click();
+  if (await A.getByRole("tab", { name: "個人" }).count()) throw new Error("the 個人 filter is still shown");
   await A.getByRole("link", { name: "予定を追加" }).click();
-  await A.waitForURL(/group=personal/);
-  await A.getByText("個人の予定は、あなただけに表示されます").waitFor();
-  if (await A.getByRole("switch", { name: "出欠を確認する" }).count()) throw new Error("attendance switch shown for a personal event");
-  if (await A.getByRole("button", { name: "画像を選択" }).count()) throw new Error("image picker shown for a personal event");
-  await A.getByLabel("タイトル").fill("歯医者の予約");
-  await A.getByLabel("場所（任意）").fill("駅前クリニック");
-  await shot(A, "d19-personal-event-form");
+  await A.getByLabel("グループ", { exact: true }).waitFor();
+  if (await A.getByRole("option", { name: /自分だけ/ }).count()) throw new Error("the personal option is still offered");
+  await A.getByLabel("グループ", { exact: true }).selectOption(groupId);
+  await A.getByLabel("タイトル").fill("譜面の配布");
   await A.getByRole("button", { name: "予定を作成" }).click();
   // after creating, the app returns to the calendar with the event's day selected
   await A.waitForURL(/\/calendar$/);
   await A.getByRole("tab", { name: "カレンダー", selected: true }).waitFor();
   const sel = A.locator('[role="gridcell"][aria-selected="true"]');
-  if (!(await sel.getAttribute("aria-label")).startsWith(`${M + 1}月${D}日`)) throw new Error(`wrong day selected: ${await sel.getAttribute("aria-label")}`);
+  const label = await sel.getAttribute("aria-label");
+  if (!label.includes("月")) throw new Error(`no day selected: ${label}`);
+  await A.getByText("譜面の配布").first().waitFor();
   // the selected day's number stays readable on its circle (it used to turn white on white for today in dark mode)
   for (const scheme of ["light", "dark"]) {
     await A.emulateMedia({ colorScheme: scheme });
@@ -477,37 +476,12 @@ await step("a personal event can be created from the calendar and is private to 
     if (c[0] === c[1]) throw new Error(`selected number is invisible in ${scheme} mode: ${c}`);
   }
   await A.emulateMedia({ colorScheme: "light" });
-  await A.getByRole("link", { name: /歯医者の予約/ }).first().click();
-  await A.waitForURL(/\/events\/[0-9a-f-]{36}$/);
-  await A.getByText("個人の予定（自分だけに表示）").waitFor();
-  if (await A.getByRole("heading", { name: "出欠" }).count()) throw new Error("attendance card on a personal event");
-  const { data } = await admin.from("events").select("group_id, personal_user_id, rsvp_enabled").eq("title", "歯医者の予約").single();
-  if (data.group_id !== null || data.personal_user_id !== owner.id || data.rsvp_enabled) throw new Error(JSON.stringify(data));
-  // visible to the owner in the calendar (personal filter), the timeline and the search
-  await A.goto(`${APP_URL}/calendar`);
-  await A.getByRole("tab", { name: "個人" }).click();
-  await A.getByText("個人の予定").first().waitFor();
+  // personal events made before the feature was removed are not shown
+  await owner.client.rpc("create_personal_event", { p_title: "昔の個人予定", p_starts_at: at(0, 20) });
+  await A.reload();
   await A.getByRole("tab", { name: "タイムライン" }).click();
-  await A.getByRole("link", { name: /歯医者の予約、/ }).waitFor();
-  await A.getByRole("link", { name: /歯医者の予約、/ }).getByText("個人の予定").waitFor();
-  await shot(A, "d20-personal-timeline");
-  // invisible to another member of the same group
-  await B.goto(`${APP_URL}/calendar`);
-  await B.getByRole("tab", { name: "タイムライン" }).click();
-  await B.getByRole("link", { name: /朝練、/ }).waitFor();
-  if (await B.getByText("歯医者の予約").count()) throw new Error("another member can see the personal event");
-  await B.goto(APP_URL);
-  await B.getByRole("button", { name: /検索/ }).click();
-  await B.getByRole("searchbox", { name: "検索" }).fill("歯医者");
-  await B.getByText("一致するものはありません").waitFor();
-  // and the owner can delete it
-  await A.goto(`${APP_URL}/events/${(await admin.from("events").select("id").eq("title", "歯医者の予約").single()).data.id}`);
-  await A.getByRole("button", { name: "予定のメニュー" }).click();
-  if (await A.getByRole("button", { name: "トークで共有" }).count()) throw new Error("share to chat offered for a personal event");
-  await A.getByRole("button", { name: "削除" }).click();
-  await A.getByRole("button", { name: "削除", exact: true }).click();
-  await A.waitForURL(/\/calendar/);
-  if ((await admin.from("events").select("id").eq("title", "歯医者の予約")).data.length) throw new Error("not deleted");
+  await A.getByRole("link", { name: /朝練、/ }).waitFor();
+  if (await A.getByText("昔の個人予定").count()) throw new Error("an old personal event is still shown");
 });
 
 await step("swiping a message to the left starts a reply (LINE-style)", async () => {
@@ -591,7 +565,7 @@ await step("パート・バンド: create one, its talk and events stay inside t
   await A.getByText("サックスのパート練").first().waitFor();
   await shot(A, "d25-team-event-calendar");
   // the card went to the team talk
-  const card = await admin.from("messages").select("conversation_id").eq("kind", "event").eq("body", "サックスのパート練").single();
+  const card = await admin.from("messages").select("conversation_id").eq("kind", "event").eq("body", "サックスのパート練").order("created_at", { ascending: false }).limit(1).single();
   if (card.data.conversation_id !== teamConv) throw new Error("event card was not posted to the team talk");
   // another group member sees the team exists, but not its talk or events
   await B.goto(`${APP_URL}/groups/${groupId}`);

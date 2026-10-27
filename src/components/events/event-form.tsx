@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Field, Input, Select, Switch, Textarea } from "@/components/ui/form";
 import { useToast } from "@/components/ui/toast";
 import { SignedImage } from "@/components/media/signed-image";
-import { GroupPicker, PERSONAL, canCreate } from "@/components/polls/poll-form";
+import { GroupPicker, canCreate } from "@/components/polls/poll-form";
 import { cn } from "@/lib/cn";
 
 function defaultStart(initialDate?: string) {
@@ -47,7 +47,7 @@ export function EventForm({
   const start0 = event ? new Date(event.starts_at) : defaultStart(initialDate);
   const end0 = event?.ends_at ? new Date(event.ends_at) : new Date(start0.getTime() + 2 * 3600_000);
 
-  const [groupId, setGroupId] = useState(fixedGroup ?? event?.group_id ?? (event?.personal_user_id ? PERSONAL : ""));
+  const [groupId, setGroupId] = useState(fixedGroup ?? event?.group_id ?? "");
   const [team, setTeam] = useState(fixedTeam ?? event?.team_id ?? "");
   const [title, setTitle] = useState(event?.title ?? "");
   const [category, setCategory] = useState<EventCategory>(event?.category ?? "practice");
@@ -69,11 +69,10 @@ export function EventForm({
   const imageInput = useRef<HTMLInputElement>(null);
 
   const effectiveGroup = fixedGroup ?? groupId;
-  const isPersonal = effectiveGroup === PERSONAL;
-  const group = isPersonal ? undefined : groups?.find((g) => g.id === effectiveGroup);
+  const group = groups?.find((g) => g.id === effectiveGroup);
   // My パート・バンド in the chosen group. Team members may always add events to their team,
   // even in groups where only admins create group-wide events.
-  const myTeams = isPersonal ? [] : (teams?.filter((t) => t.group_id === effectiveGroup && t.mine) ?? []);
+  const myTeams = teams?.filter((t) => t.group_id === effectiveGroup && t.mine) ?? [];
   const groupWide = !group || canCreate(group, "event");
   const effectiveTeam = team || (!groupWide && !editing ? (myTeams[0]?.id ?? "") : "");
   const teamName = teams?.find((t) => t.id === effectiveTeam)?.name;
@@ -95,7 +94,7 @@ export function EventForm({
     if (!title.trim()) e.title = "タイトルを入力してください";
     if (!startsAt) e.start = "開始日時を入力してください";
     if (startsAt && endsAt && new Date(endsAt) < new Date(startsAt)) e.end = "終了は開始より後にしてください";
-    if (!isPersonal && rsvp && rsvpDeadline && startsAt && new Date(fromLocalInputValue(rsvpDeadline)!) > new Date(startsAt)) {
+    if (rsvp && rsvpDeadline && startsAt && new Date(fromLocalInputValue(rsvpDeadline)!) > new Date(startsAt)) {
       e.rsvpDeadline = "回答期限は開始日時より前にしてください";
     }
     setErrors(e);
@@ -108,7 +107,7 @@ export function EventForm({
     setSaving(true);
     try {
       let path = imagePath;
-      if (imageFile && !isPersonal) {
+      if (imageFile) {
         const uploaded = await uploadMedia(`g/${effectiveGroup}/events/`, imageFile);
         path = uploaded.path;
       }
@@ -127,19 +126,7 @@ export function EventForm({
         p_image_path: path ?? undefined,
       };
       let id = event?.id;
-      if (isPersonal && !event) {
-        const { data, error } = await getSupabase().rpc("create_personal_event", {
-          p_title: common.p_title,
-          p_starts_at: common.p_starts_at,
-          p_ends_at: common.p_ends_at,
-          p_all_day: common.p_all_day,
-          p_location: common.p_location,
-          p_description: common.p_description,
-          p_category: common.p_category,
-        });
-        if (error) throw error;
-        id = data;
-      } else if (event) {
+      if (event) {
         const { error } = await getSupabase().rpc("update_event", { p_event_id: event.id, ...common, p_ends_at: endsAt as string, p_rsvp_deadline: (rsvp ? fromLocalInputValue(rsvpDeadline) : null) as string });
         if (error) throw error;
       } else {
@@ -169,9 +156,7 @@ export function EventForm({
 
   return (
     <form onSubmit={submit} noValidate className="space-y-5 px-4 pt-1 pb-6">
-      {(!fixedGroup || fixedGroup === PERSONAL) && !editing && (
-        <GroupPicker value={groupId} onChange={(v) => (setGroupId(v), setTeam(""))} groups={selectable} what="event" allowPersonal />
-      )}
+      {!fixedGroup && !editing && <GroupPicker value={groupId} onChange={(v) => (setGroupId(v), setTeam(""))} groups={selectable} what="event" />}
       {errors.group && <p className="-mt-3 px-1 text-[13px] text-danger">{errors.group}</p>}
       {!editing && !fixedTeam && myTeams.length > 0 && (
         <Field label="対象" htmlFor="event-team">
@@ -261,7 +246,6 @@ export function EventForm({
         <Textarea id="event-desc" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={3000} placeholder="持ち物、集合時間など" />
       </Field>
 
-      {!isPersonal && (
       <div>
         <p className="mb-1.5 px-1 text-[13px] font-semibold text-label-2">画像（任意）</p>
         {imageFile || imagePath ? (
@@ -283,14 +267,7 @@ export function EventForm({
         )}
         <input ref={imageInput} type="file" accept="image/*" hidden onChange={(e) => (setImageFile(e.target.files?.[0] ?? null), (e.target.value = ""))} />
       </div>
-      )}
 
-      {isPersonal ? (
-        <p className="rounded-2xl bg-surface px-4 py-3 text-[13px] leading-relaxed text-label-2">
-          個人の予定は、あなただけに表示されます。グループのメンバーや管理者には見えず、通知も送られません。
-        </p>
-      ) : (
-      <>
       <div className="overflow-hidden rounded-[var(--radius-card)] bg-surface-2 divide-y divide-separator">
         <Switch checked={rsvp} onChange={setRsvp} label="出欠を確認する" description="メンバーに参加・不参加・未定の回答を求めます" />
         {!editing && !fixedGroup && (
@@ -310,8 +287,6 @@ export function EventForm({
             </Select>
           </Field>
         </div>
-      )}
-      </>
       )}
 
       <Button type="submit" block size="lg" loading={saving}>

@@ -381,7 +381,7 @@ export default function HomePage() {
                             <span className="min-w-0 flex-1">
                               <span className="block truncate text-[15px] font-semibold">{e.title}</span>
                               <span className="block truncate text-[12px] text-label-3">{formatEventRange(e.starts_at, e.ends_at, e.all_day)}</span>
-                              {g ? <GroupTag name={g.name} color={g.color} className="mt-0.5" /> : <span className="mt-0.5 block text-[12px] font-medium text-label-2">個人の予定</span>}
+                              {g && <GroupTag name={g.name} color={g.color} className="mt-0.5" />}
                             </span>
                             {e.rsvp_enabled &&
                               (status ? (

@@ -100,7 +100,7 @@ export function useTeams() {
   });
 }
 
-/** Label for where an event belongs: "グループ" or "グループ / パート・バンド" (null for personal events). */
+/** Label for where an event belongs: "グループ" or "グループ / パート・バンド". */
 export function useEventScope() {
   const { data: groups } = useMyGroups();
   const { data: teams } = useTeams();
@@ -256,9 +256,12 @@ export function useEvents() {
     queryFn: async () => {
       const from = new Date(Date.now() - 60 * 86400000).toISOString();
       const to = new Date(Date.now() + 365 * 86400000).toISOString();
-      return unwrap(
+      const rows = unwrap(
         await getSupabase().from("events").select("*").gte("starts_at", from).lte("starts_at", to).order("starts_at").limit(1000),
       ) as EventRow[];
+      // Personal events (自分だけの予定) were removed from the app; old ones stay hidden.
+      // Filtered here rather than in the query, so databases without that column still work.
+      return rows.filter((e) => !e.personal_user_id);
     },
   });
 }

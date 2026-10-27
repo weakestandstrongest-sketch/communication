@@ -158,6 +158,29 @@ export function ChatView({ conversationId }: { conversationId: string }) {
   }, []);
   useVisualViewportFit(container, keepBottom);
 
+  // Cards (polls, events …) and images fill in after the first paint and grow taller.
+  // While the reader is at the bottom, follow that growth so the newest message stays in view.
+  useEffect(() => {
+    const el = scroller.current;
+    if (!el) return;
+    let height = el.scrollHeight;
+    const ro = new ResizeObserver(() => {
+      if (el.scrollHeight === height) return;
+      height = el.scrollHeight;
+      if (atBottom.current) el.scrollTo({ top: height });
+    });
+    const observeRows = () => {
+      for (const child of el.children) ro.observe(child);
+    };
+    observeRows();
+    const mo = new MutationObserver(observeRows);
+    mo.observe(el, { childList: true });
+    return () => {
+      ro.disconnect();
+      mo.disconnect();
+    };
+  }, []);
+
   // Always refresh the latest page when the conversation is opened.
   useEffect(() => {
     void loadLatest(conversationId);

@@ -5,7 +5,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { addDays, addMonths, addWeeks, differenceInCalendarMonths, format, getDaysInMonth, isValid, parseISO, startOfDay } from "date-fns";
 import { ja } from "date-fns/locale";
-import { Lock, MapPin, Plus } from "lucide-react";
+import { MapPin, Plus } from "lucide-react";
 import { isPollClosed, needsAttendance, useEventScope, useEvents, useMyAttendance, useMyGroups, usePolls, useTeams } from "@/lib/queries";
 import { errorMessage } from "@/lib/errors";
 import { formatTime, toLocalDateInputValue } from "@/lib/format";
@@ -101,7 +101,7 @@ function CalendarView() {
   const filtered = useMemo(
     () =>
       (events ?? []).filter((e) =>
-        group === "all" ? true : group === "personal" ? Boolean(e.personal_user_id) : group.startsWith("team:") ? e.team_id === group.slice(5) : e.group_id === group,
+        group === "all" ? true : group.startsWith("team:") ? e.team_id === group.slice(5) : e.group_id === group,
       ),
     [events, group],
   );
@@ -182,7 +182,9 @@ function CalendarView() {
     setSelected(next);
     setCursor(next);
   };
-  const addHref = `/events/new?date=${toLocalDateInputValue(selected)}${group !== "all" ? `&group=${group}` : ""}`;
+  const chipTeam = group.startsWith("team:") ? teams?.find((t) => t.id === group.slice(5)) : undefined;
+  const addScope = chipTeam ? `&group=${chipTeam.group_id}&team=${chipTeam.id}` : group !== "all" ? `&group=${group}` : "";
+  const addHref = `/events/new?date=${toLocalDateInputValue(selected)}${addScope}`;
 
   const selectedEvents = byDay.get(selected.toDateString()) ?? [];
   const free = freeMinutes(selected, selectedEvents);
@@ -208,7 +210,6 @@ function CalendarView() {
               ...groups,
               // My パート・バンド get their own chips, after the groups.
               ...(teams ?? []).filter((t) => t.mine).map((t) => ({ id: `team:${t.id}`, name: t.name })),
-              { id: "personal", name: "個人" },
             ].map((g) => (
               <button
                 key={g.id}
@@ -263,7 +264,7 @@ function CalendarView() {
             polls={openPolls}
             pending={pending}
             myAttendance={mine as Map<string, AttendanceStatus> | undefined}
-            groupName={(e) => scope(e)?.name ?? (e.personal_user_id ? "個人の予定" : "")}
+            groupName={(e) => scope(e)?.name ?? ""}
             onSelect={selectDay}
             onMoveDay={moveDay}
             onMoveWeek={moveWeek}
@@ -298,7 +299,7 @@ function DayRow({ event: e, group, status }: { event: EventRow; group?: { name: 
               {e.location}
             </p>
           )}
-          {group ? <GroupTag name={group.name} color={group.color} className="mt-0.5" /> : e.personal_user_id && <span className="mt-0.5 inline-flex items-center gap-1 text-[12px] font-medium text-label-2"><Lock className="size-3" aria-hidden />個人の予定</span>}
+          {group && <GroupTag name={group.name} color={group.color} className="mt-0.5" />}
         </div>
         <div className="flex shrink-0 flex-col items-end justify-center">
           {e.canceled_at ? (
