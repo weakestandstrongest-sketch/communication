@@ -46,7 +46,7 @@ export function DayTimeline({
   polls: PollListItem[];
   pending: Array<{ key: string; href: string; label: string; sub: string; kind: "poll" | "event"; urgent: boolean }>;
   myAttendance: Map<string, AttendanceStatus> | undefined;
-  groupName: (groupId: string) => string;
+  groupName: (groupId: string | null) => string;
   onSelect: (d: Date) => void;
   onMoveDay: (delta: 1 | -1) => void;
   onMoveWeek: (delta: 1 | -1) => void;

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Ban, CalendarPlus, Clock, MapPin, MoreHorizontal, Pencil, RotateCcw, Share2, Trash2 } from "lucide-react";
+import { Ban, CalendarPlus, Clock, Lock, MapPin, MoreHorizontal, Pencil, RotateCcw, Share2, Trash2 } from "lucide-react";
 import { getSupabase } from "@/lib/supabase/client";
 import { useUserId } from "@/lib/auth";
 import { qk, useAttendance, useEvent, useMyGroups, usePeople } from "@/lib/queries";
@@ -36,7 +36,7 @@ export default function EventDetailPage() {
   const queryClient = useQueryClient();
   const people = usePeople();
   const { data: event, isLoading } = useEvent(id);
-  const { data: attendance } = useAttendance(event ? id : null);
+  const { data: attendance } = useAttendance(event && !event.personal_user_id ? id : null);
   const { data: groups } = useMyGroups();
   const [menu, setMenu] = useState(false);
   const [comment, setComment] = useState<string | null>(null);
@@ -52,8 +52,9 @@ export default function EventDetailPage() {
     );
   }
 
-  const group = groups?.find((g) => g.id === event.group_id);
-  const canManage = event.created_by === myId || group?.my_role === "owner" || group?.my_role === "admin";
+  const isPersonal = event.personal_user_id !== null;
+  const group = event.group_id ? groups?.find((g) => g.id === event.group_id) : undefined;
+  const canManage = isPersonal ? event.personal_user_id === myId : event.created_by === myId || group?.my_role === "owner" || group?.my_role === "admin";
   const organizer = event.created_by ? people.get(event.created_by) : undefined;
   const closedReason = attendanceClosedReason(event);
   const myComment = comment ?? attendance?.mine?.comment ?? "";
@@ -132,6 +133,12 @@ export default function EventDetailPage() {
           <div className="px-4 py-4">
             <div className="flex flex-wrap items-center gap-2">
               {group && <GroupTag name={group.name} color={group.color} />}
+              {isPersonal && (
+                <span className="inline-flex items-center gap-1 text-[12px] font-medium text-label-2">
+                  <Lock className="size-3" aria-hidden />
+                  個人の予定（自分だけに表示）
+                </span>
+              )}
               <span className="inline-flex items-center gap-1 text-[12px] font-medium text-label-2">
                 <span className="size-2 rounded-full" style={{ background: CATEGORY_COLOR[event.category] }} aria-hidden />
                 {CATEGORY_LABEL[event.category]}
@@ -171,9 +178,11 @@ export default function EventDetailPage() {
               <Button variant="secondary" size="sm" icon={<CalendarPlus className="size-4" />} onClick={addToCalendar}>
                 カレンダーに追加
               </Button>
+              {!isPersonal && (
               <Button variant="secondary" size="sm" icon={<Share2 className="size-4" />} onClick={share}>
                 トークで共有
               </Button>
+              )}
             </div>
           </div>
         </Card>
@@ -268,10 +277,10 @@ export default function EventDetailPage() {
         open={menu}
         onClose={() => setMenu(false)}
         actions={[
-          { label: "トークで共有", icon: <Share2 />, onSelect: share },
+          { label: "トークで共有", icon: <Share2 />, hidden: isPersonal, onSelect: share },
           { label: "カレンダーに追加 (.ics)", icon: <CalendarPlus />, onSelect: addToCalendar },
           { label: "編集", icon: <Pencil />, hidden: !canManage, onSelect: () => router.push(`/events/${id}/edit`) },
-          { label: event.canceled_at ? "中止を取り消す" : "中止にする", icon: event.canceled_at ? <RotateCcw /> : <Ban />, hidden: !canManage, onSelect: toggleCancel },
+          { label: event.canceled_at ? "中止を取り消す" : "中止にする", icon: event.canceled_at ? <RotateCcw /> : <Ban />, hidden: !canManage || isPersonal, onSelect: toggleCancel },
           { label: "削除", icon: <Trash2 />, destructive: true, hidden: !canManage, onSelect: remove },
         ]}
       />

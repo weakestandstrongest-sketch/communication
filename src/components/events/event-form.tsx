@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Field, Input, Select, Switch, Textarea } from "@/components/ui/form";
 import { useToast } from "@/components/ui/toast";
 import { SignedImage } from "@/components/media/signed-image";
-import { GroupPicker, canCreate } from "@/components/polls/poll-form";
+import { GroupPicker, PERSONAL, canCreate } from "@/components/polls/poll-form";
 import { cn } from "@/lib/cn";
 
 function defaultStart(initialDate?: string) {
@@ -43,7 +43,7 @@ export function EventForm({
   const start0 = event ? new Date(event.starts_at) : defaultStart(initialDate);
   const end0 = event?.ends_at ? new Date(event.ends_at) : new Date(start0.getTime() + 2 * 3600_000);
 
-  const [groupId, setGroupId] = useState(fixedGroup ?? event?.group_id ?? "");
+  const [groupId, setGroupId] = useState(fixedGroup ?? event?.group_id ?? (event?.personal_user_id ? PERSONAL : ""));
   const [title, setTitle] = useState(event?.title ?? "");
   const [category, setCategory] = useState<EventCategory>(event?.category ?? "practice");
   const [allDay, setAllDay] = useState(event?.all_day ?? false);
@@ -64,7 +64,8 @@ export function EventForm({
   const imageInput = useRef<HTMLInputElement>(null);
 
   const effectiveGroup = fixedGroup ?? groupId;
-  const group = groups?.find((g) => g.id === effectiveGroup);
+  const isPersonal = effectiveGroup === PERSONAL;
+  const group = isPersonal ? undefined : groups?.find((g) => g.id === effectiveGroup);
   const selectable = groups?.filter((g) => canCreate(g, "event")) ?? [];
 
   const compute = () => {
@@ -83,7 +84,7 @@ export function EventForm({
     if (!title.trim()) e.title = "タイトルを入力してください";
     if (!startsAt) e.start = "開始日時を入力してください";
     if (startsAt && endsAt && new Date(endsAt) < new Date(startsAt)) e.end = "終了は開始より後にしてください";
-    if (rsvp && rsvpDeadline && startsAt && new Date(fromLocalInputValue(rsvpDeadline)!) > new Date(startsAt)) {
+    if (!isPersonal && rsvp && rsvpDeadline && startsAt && new Date(fromLocalInputValue(rsvpDeadline)!) > new Date(startsAt)) {
       e.rsvpDeadline = "回答期限は開始日時より前にしてください";
     }
     setErrors(e);
@@ -96,7 +97,7 @@ export function EventForm({
     setSaving(true);
     try {
       let path = imagePath;
-      if (imageFile) {
+      if (imageFile && !isPersonal) {
         const uploaded = await uploadMedia(`g/${effectiveGroup}/events/`, imageFile);
         path = uploaded.path;
       }
@@ -115,7 +116,19 @@ export function EventForm({
         p_image_path: path ?? undefined,
       };
       let id = event?.id;
-      if (event) {
+      if (isPersonal && !event) {
+        const { data, error } = await getSupabase().rpc("create_personal_event", {
+          p_title: common.p_title,
+          p_starts_at: common.p_starts_at,
+          p_ends_at: common.p_ends_at,
+          p_all_day: common.p_all_day,
+          p_location: common.p_location,
+          p_description: common.p_description,
+          p_category: common.p_category,
+        });
+        if (error) throw error;
+        id = data;
+      } else if (event) {
         const { error } = await getSupabase().rpc("update_event", { p_event_id: event.id, ...common, p_ends_at: endsAt as string, p_rsvp_deadline: (rsvp ? fromLocalInputValue(rsvpDeadline) : null) as string });
         if (error) throw error;
       } else {
@@ -140,7 +153,7 @@ export function EventForm({
 
   return (
     <form onSubmit={submit} noValidate className="space-y-5 px-4 pt-1 pb-6">
-      {!fixedGroup && !editing && <GroupPicker value={groupId} onChange={setGroupId} groups={selectable} what="event" />}
+      {(!fixedGroup || fixedGroup === PERSONAL) && !editing && <GroupPicker value={groupId} onChange={setGroupId} groups={selectable} what="event" allowPersonal />}
       {errors.group && <p className="-mt-3 px-1 text-[13px] text-danger">{errors.group}</p>}
 
       <Field label="タイトル" htmlFor="event-title" error={errors.title}>
@@ -215,6 +228,7 @@ export function EventForm({
         <Textarea id="event-desc" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={3000} placeholder="持ち物、集合時間など" />
       </Field>
 
+      {!isPersonal && (
       <div>
         <p className="mb-1.5 px-1 text-[13px] font-semibold text-label-2">画像（任意）</p>
         {imageFile || imagePath ? (
@@ -236,7 +250,14 @@ export function EventForm({
         )}
         <input ref={imageInput} type="file" accept="image/*" hidden onChange={(e) => (setImageFile(e.target.files?.[0] ?? null), (e.target.value = ""))} />
       </div>
+      )}
 
+      {isPersonal ? (
+        <p className="rounded-2xl bg-surface px-4 py-3 text-[13px] leading-relaxed text-label-2">
+          個人の予定は、あなただけに表示されます。グループのメンバーや管理者には見えず、通知も送られません。
+        </p>
+      ) : (
+      <>
       <div className="overflow-hidden rounded-[var(--radius-card)] bg-surface-2 divide-y divide-separator">
         <Switch checked={rsvp} onChange={setRsvp} label="出欠を確認する" description="メンバーに参加・不参加・未定の回答を求めます" />
         {!editing && !fixedGroup && <Switch checked={postToChat} onChange={setPostToChat} label="グループトークに投稿" />}
@@ -254,6 +275,8 @@ export function EventForm({
             </Select>
           </Field>
         </div>
+      )}
+      </>
       )}
 
       <Button type="submit" block size="lg" loading={saving}>

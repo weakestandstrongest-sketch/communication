@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { addDays, addMonths, addWeeks, differenceInCalendarMonths, format, startOfDay } from "date-fns";
 import { ja } from "date-fns/locale";
-import { MapPin, Plus } from "lucide-react";
+import { Lock, MapPin, Plus } from "lucide-react";
 import { isPollClosed, needsAttendance, useEvents, useMyAttendance, useMyGroups, usePolls } from "@/lib/queries";
 import { errorMessage } from "@/lib/errors";
 import { formatTime, toLocalDateInputValue } from "@/lib/format";
@@ -67,7 +67,10 @@ export default function CalendarPage() {
   const [group, setGroup] = useState("all");
 
   const groupById = useMemo(() => new Map((groups ?? []).map((g) => [g.id, g])), [groups]);
-  const filtered = useMemo(() => (events ?? []).filter((e) => group === "all" || e.group_id === group), [events, group]);
+  const filtered = useMemo(
+    () => (events ?? []).filter((e) => (group === "all" ? true : group === "personal" ? e.personal_user_id !== null : e.group_id === group)),
+    [events, group],
+  );
   const byDay = useMemo(() => {
     const map = new Map<string, EventRow[]>();
     for (const e of filtered) {
@@ -142,16 +145,7 @@ export default function CalendarPage() {
 
   return (
     <>
-      <PageHeader
-        title="予定"
-        large
-        actions={
-          <Link href={addHref} className="flex h-9 items-center gap-1 rounded-full bg-accent px-3.5 text-[14px] font-semibold text-accent-contrast" aria-label="予定を作成">
-            <Plus className="size-4" aria-hidden />
-            予定
-          </Link>
-        }
-      />
+      <PageHeader title="予定" large />
       <PageBody className="space-y-4">
         <Segmented
           label="表示切替"
@@ -162,9 +156,9 @@ export default function CalendarPage() {
             { value: "timeline", label: "タイムライン" },
           ]}
         />
-        {groups && groups.length > 1 && (
-          <div className="scrollbar-none -mx-4 flex gap-1.5 overflow-x-auto px-4" role="tablist" aria-label="グループで絞り込み">
-            {[{ id: "all", name: "全グループ" }, ...groups].map((g) => (
+        {groups && (
+          <div className="scrollbar-none -mx-4 flex gap-1.5 overflow-x-auto px-4" role="tablist" aria-label="絞り込み">
+            {[{ id: "all", name: "すべて" }, ...groups, { id: "personal", name: "個人" }].map((g) => (
               <button
                 key={g.id}
                 type="button"
@@ -204,7 +198,7 @@ export default function CalendarPage() {
               ) : (
                 <ul className="space-y-2">
                   {selectedEvents.map((e) => (
-                    <DayRow key={e.id} event={e} group={groupById.get(e.group_id)} status={mine?.get(e.id) as AttendanceStatus | undefined} />
+                    <DayRow key={e.id} event={e} group={e.group_id ? groupById.get(e.group_id) : undefined} status={mine?.get(e.id) as AttendanceStatus | undefined} />
                   ))}
                 </ul>
               )}
@@ -218,7 +212,7 @@ export default function CalendarPage() {
             polls={openPolls}
             pending={pending}
             myAttendance={mine as Map<string, AttendanceStatus> | undefined}
-            groupName={(id) => groupById.get(id)?.name ?? ""}
+            groupName={(id) => (id ? (groupById.get(id)?.name ?? "") : "個人の予定")}
             onSelect={selectDay}
             onMoveDay={moveDay}
             onMoveWeek={moveWeek}
@@ -230,7 +224,7 @@ export default function CalendarPage() {
       <Link
         href={addHref}
         aria-label="予定を追加"
-        className="fixed right-4 bottom-[calc(94px+env(safe-area-inset-bottom))] z-30 flex size-14 items-center justify-center rounded-full bg-accent text-accent-contrast shadow-[var(--shadow-float)] transition-transform active:scale-95 lg:hidden"
+        className="fixed right-4 bottom-[calc(94px+env(safe-area-inset-bottom))] z-30 flex size-14 items-center justify-center rounded-full bg-accent text-accent-contrast shadow-[var(--shadow-float)] transition-transform active:scale-95 lg:right-8 lg:bottom-8"
       >
         <Plus className="size-7" strokeWidth={2.4} aria-hidden />
       </Link>
@@ -253,7 +247,7 @@ function DayRow({ event: e, group, status }: { event: EventRow; group?: { name: 
               {e.location}
             </p>
           )}
-          {group && <GroupTag name={group.name} color={group.color} className="mt-0.5" />}
+          {group ? <GroupTag name={group.name} color={group.color} className="mt-0.5" /> : e.personal_user_id && <span className="mt-0.5 inline-flex items-center gap-1 text-[12px] font-medium text-label-2"><Lock className="size-3" aria-hidden />個人の予定</span>}
         </div>
         <div className="flex shrink-0 flex-col items-end justify-center">
           {e.canceled_at ? (

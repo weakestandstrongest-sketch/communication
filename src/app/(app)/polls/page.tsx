@@ -60,16 +60,7 @@ export default function PollsPage() {
 
   return (
     <>
-      <PageHeader
-        title="投票"
-        large
-        actions={
-          <Link href="/polls/new" className="flex h-9 items-center gap-1 rounded-full bg-accent px-3.5 text-[14px] font-semibold text-accent-contrast" aria-label="投票を作成">
-            <Plus className="size-4" aria-hidden />
-            作成
-          </Link>
-        }
-      />
+      <PageHeader title="投票" large />
       <PageBody className="space-y-4">
         <Chips
           label="投票の絞り込み"
@@ -123,6 +114,14 @@ export default function PollsPage() {
           </ul>
         )}
       </PageBody>
+
+      <Link
+        href={group !== "all" ? `/polls/new?group=${group}` : "/polls/new"}
+        aria-label="投票を作成"
+        className="fixed right-4 bottom-[calc(94px+env(safe-area-inset-bottom))] z-30 flex size-14 items-center justify-center rounded-full bg-accent text-accent-contrast shadow-[var(--shadow-float)] transition-transform active:scale-95 lg:right-8 lg:bottom-8"
+      >
+        <Plus className="size-7" strokeWidth={2.4} aria-hidden />
+      </Link>
     </>
   );
 }

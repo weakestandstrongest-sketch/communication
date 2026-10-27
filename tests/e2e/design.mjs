@@ -402,6 +402,71 @@ await step("意見箱 fits a 320px screen", async () => {
   await ctx.close();
 });
 
+await step("header buttons are gone; 予定 and 投票 have a round + button at the bottom right", async () => {
+  await A.goto(`${APP_URL}/calendar`);
+  await A.getByRole("heading", { name: "予定", level: 1 }).first().waitFor();
+  const vp = A.viewportSize();
+  for (const [url, label] of [["/calendar", "予定を追加"], ["/polls", "投票を作成"]]) {
+    await A.goto(`${APP_URL}${url}`);
+    const fab = A.getByRole("link", { name: label });
+    await fab.waitFor();
+    if ((await A.locator("main").getByRole("link", { name: /^\+? ?(予定|作成)$/ }).count()) > 0) throw new Error(`${url}: header button still exists`);
+    const box = await fab.boundingBox();
+    if (box.width < 50 || Math.abs(box.width - box.height) > 1) throw new Error(`${url}: not round (${box.width}x${box.height})`);
+    if (vp.width - (box.x + box.width) > 24) throw new Error(`${url}: not at the right edge`);
+    const bar = await A.getByRole("navigation", { name: "メインナビゲーション" }).locator("ul").boundingBox();
+    if (box.y + box.height > bar.y) throw new Error(`${url}: overlaps the tab bar`);
+  }
+  await shot(A, "d18-polls-fab");
+  await A.getByRole("link", { name: "投票を作成" }).click();
+  await A.waitForURL(/\/polls\/new/);
+  await A.getByLabel("質問").waitFor();
+});
+
+await step("a personal event can be created from the calendar and is private to its owner", async () => {
+  await A.goto(`${APP_URL}/calendar`);
+  await A.getByRole("tab", { name: "個人" }).click();
+  await A.getByRole("link", { name: "予定を追加" }).click();
+  await A.waitForURL(/group=personal/);
+  await A.getByText("個人の予定は、あなただけに表示されます").waitFor();
+  if (await A.getByRole("switch", { name: "出欠を確認する" }).count()) throw new Error("attendance switch shown for a personal event");
+  if (await A.getByRole("button", { name: "画像を選択" }).count()) throw new Error("image picker shown for a personal event");
+  await A.getByLabel("タイトル").fill("歯医者の予約");
+  await A.getByLabel("場所（任意）").fill("駅前クリニック");
+  await shot(A, "d19-personal-event-form");
+  await A.getByRole("button", { name: "予定を作成" }).click();
+  await A.waitForURL(/\/events\/[0-9a-f-]{36}$/);
+  await A.getByText("個人の予定（自分だけに表示）").waitFor();
+  if (await A.getByRole("heading", { name: "出欠" }).count()) throw new Error("attendance card on a personal event");
+  const { data } = await admin.from("events").select("group_id, personal_user_id, rsvp_enabled").eq("title", "歯医者の予約").single();
+  if (data.group_id !== null || data.personal_user_id !== owner.id || data.rsvp_enabled) throw new Error(JSON.stringify(data));
+  // visible to the owner in the calendar (personal filter), the timeline and the search
+  await A.goto(`${APP_URL}/calendar`);
+  await A.getByRole("tab", { name: "個人" }).click();
+  await A.getByText("個人の予定").first().waitFor();
+  await A.getByRole("tab", { name: "タイムライン" }).click();
+  await A.getByRole("link", { name: /歯医者の予約、/ }).waitFor();
+  await A.getByRole("link", { name: /歯医者の予約、/ }).getByText("個人の予定").waitFor();
+  await shot(A, "d20-personal-timeline");
+  // invisible to another member of the same group
+  await B.goto(`${APP_URL}/calendar`);
+  await B.getByRole("tab", { name: "タイムライン" }).click();
+  await B.getByRole("link", { name: /朝練、/ }).waitFor();
+  if (await B.getByText("歯医者の予約").count()) throw new Error("another member can see the personal event");
+  await B.goto(APP_URL);
+  await B.getByRole("button", { name: /検索/ }).click();
+  await B.getByRole("searchbox", { name: "検索" }).fill("歯医者");
+  await B.getByText("一致するものはありません").waitFor();
+  // and the owner can delete it
+  await A.goto(`${APP_URL}/events/${(await admin.from("events").select("id").eq("title", "歯医者の予約").single()).data.id}`);
+  await A.getByRole("button", { name: "予定のメニュー" }).click();
+  if (await A.getByRole("button", { name: "トークで共有" }).count()) throw new Error("share to chat offered for a personal event");
+  await A.getByRole("button", { name: "削除" }).click();
+  await A.getByRole("button", { name: "削除", exact: true }).click();
+  await A.waitForURL(/\/calendar/);
+  if ((await admin.from("events").select("id").eq("title", "歯医者の予約")).data.length) throw new Error("not deleted");
+});
+
 console.log(`\n${passed} passed, ${failed} failed`);
 await browser.close();
 process.exit(failed ? 1 : 0);

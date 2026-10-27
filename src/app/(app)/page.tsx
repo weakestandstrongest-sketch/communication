@@ -104,7 +104,7 @@ export default function HomePage() {
     }
     for (const e of events ?? []) {
       if (!needsAttendance(e, myAttendance)) continue;
-      const g = groupById.get(e.group_id);
+      const g = e.group_id ? groupById.get(e.group_id) : undefined;
       const due = new Date(e.rsvp_deadline ?? e.starts_at).getTime();
       items.push({
         key: `event-${e.id}`,
@@ -374,7 +374,7 @@ export default function HomePage() {
                 <Card className="overflow-hidden">
                   <ul className="divide-y divide-separator">
                     {upcoming.map((e) => {
-                      const g = groupById.get(e.group_id);
+                      const g = e.group_id ? groupById.get(e.group_id) : undefined;
                       const status = myAttendance?.get(e.id) as AttendanceStatus | undefined;
                       return (
                         <li key={e.id}>
@@ -383,7 +383,7 @@ export default function HomePage() {
                             <span className="min-w-0 flex-1">
                               <span className="block truncate text-[15px] font-semibold">{e.title}</span>
                               <span className="block truncate text-[12px] text-label-3">{formatEventRange(e.starts_at, e.ends_at, e.all_day)}</span>
-                              {g && <GroupTag name={g.name} color={g.color} className="mt-0.5" />}
+                              {g ? <GroupTag name={g.name} color={g.color} className="mt-0.5" /> : <span className="mt-0.5 block text-[12px] font-medium text-label-2">個人の予定</span>}
                             </span>
                             {e.rsvp_enabled &&
                               (status ? (

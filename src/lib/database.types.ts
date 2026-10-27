@@ -193,14 +193,14 @@ isOneToOne: false
                   ]
                 },"events": {
                   Row: {
-                    "all_day": boolean,"attendance_visibility": string,"canceled_at": string | null,"category": Database["public"]['Enums']["event_category"],"created_at": string,"created_by": string | null,"description": string,"ends_at": string | null,"going_count": number,"group_id": string,"id": string,"image_path": string | null,"location": string,"maybe_count": number,"not_going_count": number,"rsvp_deadline": string | null,"rsvp_enabled": boolean,"starts_at": string,"title": string,"updated_at": string
+                    "all_day": boolean,"attendance_visibility": string,"canceled_at": string | null,"category": Database["public"]['Enums']["event_category"],"created_at": string,"created_by": string | null,"description": string,"ends_at": string | null,"going_count": number,"group_id": string | null,"id": string,"image_path": string | null,"location": string,"maybe_count": number,"not_going_count": number,"personal_user_id": string | null,"rsvp_deadline": string | null,"rsvp_enabled": boolean,"starts_at": string,"title": string,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "all_day"?: boolean,"attendance_visibility"?: string,"canceled_at"?: string | null,"category"?: Database["public"]['Enums']["event_category"],"created_at"?: string,"created_by"?: string | null,"description"?: string,"ends_at"?: string | null,"going_count"?: number,"group_id": string,"id"?: string,"image_path"?: string | null,"location"?: string,"maybe_count"?: number,"not_going_count"?: number,"rsvp_deadline"?: string | null,"rsvp_enabled"?: boolean,"starts_at": string,"title": string,"updated_at"?: string
+                    "all_day"?: boolean,"attendance_visibility"?: string,"canceled_at"?: string | null,"category"?: Database["public"]['Enums']["event_category"],"created_at"?: string,"created_by"?: string | null,"description"?: string,"ends_at"?: string | null,"going_count"?: number,"group_id"?: string | null,"id"?: string,"image_path"?: string | null,"location"?: string,"maybe_count"?: number,"not_going_count"?: number,"personal_user_id"?: string | null,"rsvp_deadline"?: string | null,"rsvp_enabled"?: boolean,"starts_at": string,"title": string,"updated_at"?: string
                   }
                   Update: {
-                    "all_day"?: boolean,"attendance_visibility"?: string,"canceled_at"?: string | null,"category"?: Database["public"]['Enums']["event_category"],"created_at"?: string,"created_by"?: string | null,"description"?: string,"ends_at"?: string | null,"going_count"?: number,"group_id"?: string,"id"?: string,"image_path"?: string | null,"location"?: string,"maybe_count"?: number,"not_going_count"?: number,"rsvp_deadline"?: string | null,"rsvp_enabled"?: boolean,"starts_at"?: string,"title"?: string,"updated_at"?: string
+                    "all_day"?: boolean,"attendance_visibility"?: string,"canceled_at"?: string | null,"category"?: Database["public"]['Enums']["event_category"],"created_at"?: string,"created_by"?: string | null,"description"?: string,"ends_at"?: string | null,"going_count"?: number,"group_id"?: string | null,"id"?: string,"image_path"?: string | null,"location"?: string,"maybe_count"?: number,"not_going_count"?: number,"personal_user_id"?: string | null,"rsvp_deadline"?: string | null,"rsvp_enabled"?: boolean,"starts_at"?: string,"title"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -214,6 +214,12 @@ isOneToOne: false
       columns: ["group_id"]
 isOneToOne: false
       referencedRelation: "groups"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "events_personal_user_id_fkey"
+      columns: ["personal_user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
       referencedColumns: ["id"]
     }
                   ]
@@ -706,6 +712,9 @@ isOneToOne: true
                            },
 "create_group":
 { Args: { "p_color"?: string,"p_description"?: string,"p_name": string }; Returns: string
+                           },
+"create_personal_event":
+{ Args: { "p_all_day"?: boolean,"p_category"?: Database["public"]['Enums']["event_category"],"p_description"?: string,"p_ends_at"?: string,"p_location"?: string,"p_starts_at": string,"p_title": string }; Returns: string
                            },
 "create_poll":
 { Args: { "p_allow_change"?: boolean,"p_allow_free_text"?: boolean,"p_anonymous"?: boolean,"p_deadline"?: string,"p_description"?: string,"p_group_id": string,"p_multiple"?: boolean,"p_options": (string)[],"p_post_to_chat"?: boolean,"p_result_visibility"?: Database["public"]['Enums']["poll_result_visibility"],"p_title": string }; Returns: string

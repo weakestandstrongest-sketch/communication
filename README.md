@@ -35,7 +35,7 @@ These were verified against a real local Supabase stack with several signed-in t
   - You choose whether answers can be changed, and when results are visible: always, after voting, after closing, or admins only.
   - A non-respondent list for non-anonymous polls.
 - **予定 (calendar, timeline and attendance):**
-  - A month calendar with three pinch-zoom levels, a rolling month number, Japanese public holidays, and a Structured-style day timeline with free-time gaps and a "now" line. Also event categories, all-day events, location (with a map link), an optional event image, and an attendance deadline.
+  - A month calendar with three pinch-zoom levels, a rolling month number, Japanese public holidays, and a Structured-style day timeline with free-time gaps and a "now" line. Personal events (visible only to you, mixed into the same calendar and timeline), and event categories, all-day events, location (with a map link), an optional event image, and an attendance deadline.
   - Attendance comments, with individual answers visible to all members or to admins only.
   - Cancel or restore events, and download an `.ics` file for the phone's calendar.
 - **Announcements:** important (重要) and pinned announcements, read tracking (既読 N/M), optional links to a poll or event, edit and delete.
@@ -100,12 +100,13 @@ Google sign-in needs OAuth credentials, even locally; see [docs/SETUP.md](docs/S
 | --- | --- |
 | `tests/integration/security.test.ts` | 28 tests: profiles, membership and roles, invites, idempotent sends, unread counts, edit and delete permissions, reactions, mention and reply notifications, DM restrictions, poll rules (single choice, answer changes, closing, anonymity, result visibility), events and attendance (visibility, deadlines, no duplicates), announcements (posting and pinning permissions, read counts), notification privacy, push subscription ownership, reminders, storage isolation and attachment validation |
 | `tests/integration/realtime.test.ts` | Realtime only delivers to members, deletions don't leak to outsiders, and only conversation members can join private typing/presence channels |
-| `tests/e2e/design.mjs` | 17 browser steps: floating tab bar with a jelly highlight, 意見箱 end to end (including a check that API responses never contain an author id), LINE-style home and search, calendar zoom (buttons and a real two-finger pinch), month roll and swipe, holidays, timeline, profile photo and group icon upload |
+| `tests/integration/personal-events.test.ts` | 5 tests: personal events are private to their owner, create no cards or notifications, and cannot be shared or moved |
+| `tests/e2e/design.mjs` | 19 browser steps: round + buttons, personal events, floating tab bar with a jelly highlight, 意見箱 end to end (including a check that API responses never contain an author id), LINE-style home and search, calendar zoom (buttons and a real two-finger pinch), month roll and swipe, holidays, timeline, profile photo and group icon upload |
 | `tests/integration/feedback.test.ts` | 9 tests: authors are never exposed (members, admins, direct table access, notifications), stable aliases, permissions, moderation, cascading deletes, likes, topics, paging, rate limits |
 | `tests/integration/icons.test.ts` | 6 tests: who can upload or read profile photos and group icons |
 | `tests/e2e/journey.mjs` | 26 browser steps with 4 users (iPhone and desktop viewports), covering the full journey in the requirements, including offline send and retry, outsider access, 320px screens, history paging, dark mode, and push delivery and decryption |
 
-Latest run: **46/46 integration tests, 26/26 journey steps and 17/17 design steps passed**, along with `npm run lint`, `npm run typecheck` and `npm run build`.
+Latest run: **52/52 integration tests, 26/26 journey steps and 19/19 design steps passed**, along with `npm run lint`, `npm run typecheck` and `npm run build`.
 
 ## Project structure
 
