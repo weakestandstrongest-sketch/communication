@@ -1,4 +1,4 @@
-/* つどい service worker
+/* Jam service worker
  * - Shows push notifications and focuses/opens the app when one is tapped.
  * - Caches only hashed static assets (/_next/static) and the offline page.
  *   Private group data (API responses, Supabase requests, signed media URLs) is never cached,
@@ -58,9 +58,9 @@ self.addEventListener("push", (event) => {
   try {
     data = event.data ? event.data.json() : {};
   } catch {
-    data = { title: "つどい", body: event.data ? event.data.text() : "" };
+    data = { title: "Jam", body: event.data ? event.data.text() : "" };
   }
-  const title = data.title || "つどい";
+  const title = data.title || "Jam";
   event.waitUntil(
     self.registration.showNotification(title, {
       body: data.body || "",

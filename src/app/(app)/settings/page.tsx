@@ -272,7 +272,7 @@ function InstallSection() {
             </li>
             <li className="flex gap-2.5">
               <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-accent text-[12px] font-bold text-accent-contrast">3</span>
-              <span>ホーム画面の「つどい」アイコンから開き、この画面で通知をオンにする</span>
+              <span>ホーム画面の「Jam」アイコンから開き、この画面で通知をオンにする</span>
             </li>
           </ol>
         ) : (
@@ -307,7 +307,7 @@ function AccountSection() {
           ログアウト
         </Button>
       </Card>
-      <p className="mt-3 text-center text-[12px] text-label-4">つどい</p>
+      <p className="mt-3 text-center text-[12px] text-label-4">Jam</p>
     </section>
   );
 }

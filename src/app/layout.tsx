@@ -3,10 +3,10 @@ import { Providers } from "@/components/providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "つどい", template: "%s | つどい" },
+  title: { default: "Jam", template: "%s | Jam" },
   description: "サークル・部活のためのオールインワン連絡アプリ。トーク、投票、カレンダー、出欠、お知らせ、写真をひとつに。",
-  applicationName: "つどい",
-  appleWebApp: { capable: true, title: "つどい", statusBarStyle: "default" },
+  applicationName: "Jam",
+  appleWebApp: { capable: true, title: "Jam", statusBarStyle: "default" },
   formatDetection: { telephone: false, email: false, address: false },
   icons: {
     icon: [{ url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],

@@ -57,7 +57,7 @@ export function LoginCard() {
     <div className="relative w-full max-w-sm animate-pop-in">
       <div className="flex flex-col items-center text-center">
         <BrandMark className="size-[76px] shadow-[var(--shadow-float)]" />
-        <h1 className="mt-5 font-[family-name:var(--font-display)] text-[30px] font-bold tracking-tight">つどい</h1>
+        <h1 className="mt-5 font-[family-name:var(--font-display)] text-[30px] font-bold tracking-tight">Jam</h1>
         <p className="mt-1.5 text-[15px] leading-relaxed text-label-2">
           サークル・部活の連絡を、
           <br />

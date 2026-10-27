@@ -3,8 +3,8 @@ import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
-    name: "つどい - サークル・部活の連絡アプリ",
-    short_name: "つどい",
+    name: "Jam - サークル・部活の連絡アプリ",
+    short_name: "Jam",
     description: "トーク、投票、カレンダー、出欠、お知らせ、写真をひとつに。",
     start_url: "/",
     scope: "/",

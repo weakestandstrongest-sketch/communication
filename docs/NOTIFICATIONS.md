@@ -1,6 +1,6 @@
 # Notifications
 
-つどい has two layers of notifications:
+Jam has two layers of notifications:
 
 1. **In-app notification center** (`/notifications`, the bell on Home, 通知 in the sidebar). This is always on, stored in the database, and doesn't depend on browser support.
 2. **Web Push** to phones and computers. It is opt-in per device and needs VAPID keys plus an HTTPS deployment.
@@ -74,7 +74,7 @@ row inserted (messages / notifications)
 
 - Web Push on iOS requires **iOS / iPadOS 16.4 or later**, and the site must be **added to the Home Screen** and opened from that icon. Safari tabs on iOS cannot receive web push.
 - In Safari, the settings screen detects this and shows the steps: Share → 「ホーム画面に追加」→ open from the icon → turn notifications on. The member guide ([MEMBER_GUIDE.ja.md](MEMBER_GUIDE.ja.md)) has the same instructions.
-- To turn notifications off later: iOS Settings → 通知 → つどい, or 設定 → オフにする inside the app.
+- To turn notifications off later: iOS Settings → 通知 → Jam, or 設定 → オフにする inside the app.
 
 ### Android / desktop
 
@@ -92,7 +92,7 @@ Chrome, Edge and Firefox support Web Push in normal browser tabs; installing the
 | --- | --- |
 | Settings says 「サーバーでプッシュ通知が設定されていません」 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` was missing at build time. Set it and redeploy. |
 | On iPhone, settings asks you to add the app to the Home Screen | Expected on iOS. Open the app from the Home Screen icon. |
-| Permission shows 「ブロックされています」 | The user denied the prompt. Re-allow it in iOS Settings → 通知 → つどい, or in the browser's site settings. |
+| Permission shows 「ブロックされています」 | The user denied the prompt. Re-allow it in iOS Settings → 通知 → Jam, or in the browser's site settings. |
 | テスト通知 says no registration was found | Turn notifications off and on again in 設定 to re-subscribe. |
 | テスト通知 works but nothing arrives for messages or events | Check `select * from private.push_config;` (URL and secret), and check pg_net's recent responses: `select status_code, content, created from net._http_response order by created desc limit 20;`. A 401 means the secret doesn't match; a 503 means the VAPID keys are missing on the server. |
 | You don't get pushes for a conversation you're viewing | Intentional: members active in a conversation within the last 20 seconds are skipped. |

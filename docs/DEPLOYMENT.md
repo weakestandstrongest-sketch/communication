@@ -45,7 +45,7 @@ To check it worked, open **Database → Tables** and look for `groups`, `message
 1. Open https://console.cloud.google.com/ and create (or choose) a project.
 2. **APIs & Services → OAuth consent screen** (labelled "Google Auth Platform" in newer consoles):
    - User type: **External**
-   - App name: つどい (or your club's name), plus a support email and a developer contact email
+   - App name: Jam (or your club's name), plus a support email and a developer contact email
    - Scopes: `openid`, `email` and `profile`. These are the defaults and need no Google verification.
    - **Publish the app** ("In production"). While it is in "Testing", only the test users you list can sign in.
 3. **APIs & Services → Credentials → Create credentials → OAuth client ID**:

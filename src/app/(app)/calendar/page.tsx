@@ -98,7 +98,7 @@ function CalendarView() {
 
   const groupById = useMemo(() => new Map((groups ?? []).map((g) => [g.id, g])), [groups]);
   const filtered = useMemo(
-    () => (events ?? []).filter((e) => (group === "all" ? true : group === "personal" ? e.personal_user_id !== null : e.group_id === group)),
+    () => (events ?? []).filter((e) => (group === "all" ? true : group === "personal" ? Boolean(e.personal_user_id) : e.group_id === group)),
     [events, group],
   );
   const byDay = useMemo(() => {

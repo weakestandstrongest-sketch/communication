@@ -11,7 +11,7 @@ export async function POST() {
   if (!userId) return NextResponse.json({ error: "ログインが必要です" }, { status: 401 });
   if (!pushConfigured()) return NextResponse.json({ error: "サーバーでプッシュ通知が設定されていません" }, { status: 503 });
   const result = await deliver(createSupabaseAdminClient(), [
-    { userId, payload: { title: "つどい", body: "テスト通知です。通知は正しく設定されています 🎉", url: "/settings", tag: "test" } },
+    { userId, payload: { title: "Jam", body: "テスト通知です。通知は正しく設定されています 🎉", url: "/settings", tag: "test" } },
   ]);
   if (!result.sent) {
     return NextResponse.json({ error: "この端末の通知登録が見つかりません。通知を一度オフにしてからオンにしてください", ...result }, { status: 404 });

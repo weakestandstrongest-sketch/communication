@@ -52,7 +52,7 @@ export default function EventDetailPage() {
     );
   }
 
-  const isPersonal = event.personal_user_id !== null;
+  const isPersonal = Boolean(event.personal_user_id);
   const group = event.group_id ? groups?.find((g) => g.id === event.group_id) : undefined;
   const canManage = isPersonal ? event.personal_user_id === myId : event.created_by === myId || group?.my_role === "owner" || group?.my_role === "admin";
   const organizer = event.created_by ? people.get(event.created_by) : undefined;

@@ -112,7 +112,7 @@ function Sidebar() {
     <aside className="sticky top-0 hidden h-dvh w-[248px] shrink-0 flex-col border-r border-separator bg-surface lg:flex">
       <div className="flex h-16 items-center gap-2.5 px-5">
         <BrandMark className="size-8" />
-        <span className="text-[19px] font-bold tracking-tight">つどい</span>
+        <span className="text-[19px] font-bold tracking-tight">Jam</span>
       </div>
       <nav aria-label="メインナビゲーション" className="flex-1 overflow-y-auto px-3">
         <ul className="space-y-0.5">

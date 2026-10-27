@@ -74,7 +74,7 @@ await step("unauthenticated visitors are redirected to the login screen", async 
 
 await step("new user sees onboarding on the home screen", async () => {
   await A.goto(APP_URL);
-  await A.getByText("つどいへようこそ").waitFor();
+  await A.getByText("Jamへようこそ").waitFor();
   await shot(A, "01-home-onboarding");
 });
 

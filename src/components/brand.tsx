@@ -1,6 +1,6 @@
 import { cn } from "@/lib/cn";
 
-/** つどい logo mark: a speech bubble holding three members. */
+/** Jam logo mark: a speech bubble holding three members. */
 export function BrandMark({ className }: { className?: string }) {
   return (
     <span className={cn("inline-flex items-center justify-center rounded-[28%] bg-[#0b0b0d] ring-1 ring-white/10", className)} aria-hidden>

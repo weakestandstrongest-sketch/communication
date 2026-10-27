@@ -446,7 +446,7 @@ function Onboarding() {
     <Card className="overflow-hidden">
       <EmptyState
         icon={<PartyPopper />}
-        title="つどいへようこそ"
+        title="Jamへようこそ"
         description="まずはグループを作成するか、招待リンク・招待コードでグループに参加しましょう。"
         action={
           <div className="flex flex-col gap-2 sm:flex-row">

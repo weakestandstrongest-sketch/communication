@@ -1,4 +1,4 @@
-# つどい (Tsudoi)
+# Jam
 
 An all-in-one communication app for Japanese university clubs, school clubs, circles and other small groups (up to ~50 members). It puts the things clubs usually split across LINE, Google Forms and spreadsheets in one place:
 
