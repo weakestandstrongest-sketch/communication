@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { addDays, endOfMonth, endOfWeek, format, isSameDay, isSameMonth, isToday, startOfMonth, startOfWeek } from "date-fns";
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
 import { holidayName } from "@/lib/holidays";
@@ -16,6 +16,19 @@ const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
 const ZOOM_LABEL = ["ドット表示", "予定名を表示", "詳細表示"];
 const CELL_HEIGHT: Record<ZoomLevel, string> = { 0: "min-h-[54px]", 1: "min-h-[98px]", 2: "min-h-[156px]" };
 const CHIPS: Record<ZoomLevel, number> = { 0: 0, 1: 3, 2: 5 };
+
+/** Layout position of the selected day's circle inside `wrap`, ignoring transforms (the grid may be mid slide-in). */
+function selectedOffset(wrap: HTMLElement) {
+  let el = wrap.querySelector<HTMLElement>("[data-sel]");
+  let x = 0;
+  let y = 0;
+  while (el && el !== wrap) {
+    x += el.offsetLeft;
+    y += el.offsetTop;
+    el = el.offsetParent as HTMLElement | null;
+  }
+  return el === wrap ? { x, y } : null;
+}
 
 export function MonthCalendar({
   cursor,
@@ -107,6 +120,66 @@ export function MonthCalendar({
   const monthNumber = cursor.getMonth() + 1;
   const monthKey = format(cursor, "yyyy-MM");
 
+  // The selection circle travels from the previous day to the new one (across months too):
+  // a floating copy flies between the two positions while the real circle in the cell is hidden.
+  const flyer = useRef<HTMLSpanElement>(null);
+  const lastRect = useRef<{ x: number; y: number } | null>(null);
+  const lastKey = useRef("");
+  const selKey = selected.toDateString();
+  useLayoutEffect(() => {
+    const wrap = grid.current;
+    const ball = flyer.current;
+    const target = wrap?.querySelector<HTMLElement>("[data-sel]");
+    if (!wrap || !ball) return;
+    const from = lastRect.current;
+    const to = selectedOffset(wrap);
+    const changed = lastKey.current !== "" && lastKey.current !== `${selKey}|${monthKey}`;
+    const monthChanged = changed && !lastKey.current.endsWith(`|${monthKey}`);
+    lastKey.current = `${selKey}|${monthKey}`;
+    lastRect.current = to;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!changed || !from || !to || !target || reduced || (from.x === to.x && from.y === to.y)) return;
+
+    target.dataset.flying = "";
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const at = (x: number, y: number, sx = 1, sy = sx) => `translate(${x}px, ${y}px) scale(${sx}, ${sy})`;
+    const frames: Keyframe[] = monthChanged
+      ? [
+          // lifts off, shrinks and arcs towards the same day of the new month, then lands with a squish
+          { transform: at(from.x, from.y), opacity: 1 },
+          { transform: at(from.x + dx * 0.12, from.y + dy * 0.12 - 10, 0.82), opacity: 0.85, offset: 0.2 },
+          { transform: at(from.x + dx * 0.55, from.y + dy * 0.55 - 26, 0.62), opacity: 0.55, offset: 0.55 },
+          { transform: at(to.x, to.y, 1.12, 0.9), opacity: 1, offset: 0.86 },
+          { transform: at(to.x, to.y), opacity: 1 },
+        ]
+      : [
+          { transform: at(from.x, from.y), opacity: 1 },
+          { transform: at(from.x + dx * 0.5, from.y + dy * 0.5, Math.abs(dx) >= Math.abs(dy) ? 1.18 : 0.88, Math.abs(dx) >= Math.abs(dy) ? 0.88 : 1.18), offset: 0.45 },
+          { transform: at(to.x, to.y), opacity: 1 },
+        ];
+    const anim = ball.animate(frames, {
+      duration: monthChanged ? 640 : 380,
+      easing: monthChanged ? "cubic-bezier(0.45, 0, 0.2, 1)" : "cubic-bezier(0.3, 0.9, 0.3, 1)",
+      fill: "none",
+    });
+    const land = () => delete target.dataset.flying;
+    anim.onfinish = land;
+    anim.oncancel = land;
+    return () => anim.cancel();
+  }, [selKey, monthKey]);
+
+  // Keep the resting position fresh while cells grow (zoom) or the screen resizes.
+  useEffect(() => {
+    const wrap = grid.current;
+    if (!wrap) return;
+    const ro = new ResizeObserver(() => {
+      lastRect.current = selectedOffset(wrap) ?? lastRect.current;
+    });
+    ro.observe(wrap);
+    return () => ro.disconnect();
+  }, []);
+
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-end gap-x-2 gap-y-1">
@@ -143,9 +216,10 @@ export function MonthCalendar({
         {...swipe}
         data-zoom={zoom}
         aria-label={`${format(cursor, "yyyy年M月")}のカレンダー（${ZOOM_LABEL[zoom]}）`}
-        className="overflow-x-clip rounded-[var(--radius-card)] bg-surface p-1.5 select-none"
+        className="relative overflow-clip rounded-[var(--radius-card)] bg-surface p-1.5 select-none"
         style={{ touchAction: "pan-y" }}
       >
+        <span ref={flyer} aria-hidden className="pointer-events-none absolute top-0 left-0 z-0 size-7 rounded-full bg-label opacity-0" />
         <div className="grid grid-cols-7 pb-1" aria-hidden>
           {WEEKDAYS.map((w, i) => (
             <div key={w} className={cn("py-1 text-center text-[10px] font-semibold tracking-wider", i === 0 ? "text-danger" : "text-label-3")}>
@@ -153,7 +227,7 @@ export function MonthCalendar({
             </div>
           ))}
         </div>
-        <div key={monthKey} className="animate-slide-in grid grid-cols-7 gap-px" style={{ ["--dir" as string]: dir }} role="grid">
+        <div key={monthKey} className="animate-slide-in relative z-[1] grid grid-cols-7 gap-px" style={{ ["--dir" as string]: dir }} role="grid">
           {days.map((d) => {
             const list = byDay.get(d.toDateString()) ?? [];
             const inMonth = isSameMonth(d, cursor);
@@ -179,10 +253,12 @@ export function MonthCalendar({
               >
                 <span className="flex flex-col items-center">
                   <span
+                    data-sel={sel ? "" : undefined}
                     className={cn(
-                      "flex size-7 items-center justify-center rounded-full text-[14px] tabular transition-colors",
-                      sel ? "bg-label font-bold text-bg" : today ? "bg-danger font-bold text-white" : red ? "text-danger" : "",
-                      sel && today && "ring-2 ring-danger ring-offset-1 ring-offset-surface",
+                      "flex size-7 items-center justify-center rounded-full text-[14px] tabular transition-colors duration-150",
+                      today ? "bg-danger font-bold text-white" : red ? "text-danger" : "",
+                      sel && "bg-label font-bold text-bg data-flying:bg-transparent data-flying:text-[inherit] data-flying:duration-0",
+                      sel && today && "ring-2 ring-danger ring-offset-1 ring-offset-surface data-flying:bg-danger data-flying:text-white data-flying:ring-0",
                     )}
                   >
                     {d.getDate()}

@@ -189,6 +189,34 @@ await step("month changes with a rolling number and swipe", async () => {
   await label(0).waitFor();
 });
 
+await step("the selection circle flies to the same day of the next month", async () => {
+  await A.getByRole("gridcell", { name: new RegExp(`^${M + 1}月${D}日`) }).click();
+  await A.waitForTimeout(500);
+  await A.getByRole("button", { name: "次の月" }).click();
+  await A.waitForTimeout(160);
+  const mid = await A.evaluate(() => {
+    const ball = document.querySelector("[data-zoom] > span[aria-hidden]");
+    const cs = getComputedStyle(ball);
+    return { opacity: Number(cs.opacity), transform: cs.transform, flying: Boolean(document.querySelector("[data-sel][data-flying]")) };
+  });
+  if (!(mid.opacity > 0) || mid.transform === "none" || !mid.flying) throw new Error(`circle is not in flight: ${JSON.stringify(mid)}`);
+  if (shots) await shot(A, "design-circle-flight");
+  await A.waitForTimeout(700);
+  const next = new Date(Date.UTC(Y, M + 1, 1));
+  const len = new Date(Date.UTC(next.getUTCFullYear(), next.getUTCMonth() + 1, 0)).getUTCDate();
+  const sel = A.locator('[role="gridcell"][aria-selected="true"]');
+  const name = await sel.getAttribute("aria-label");
+  if (!name.startsWith(`${next.getUTCMonth() + 1}月${Math.min(D, len)}日`)) throw new Error(`selection did not carry over: ${name}`);
+  const after = await A.evaluate(() => ({
+    opacity: Number(getComputedStyle(document.querySelector("[data-zoom] > span[aria-hidden]")).opacity),
+    flying: Boolean(document.querySelector("[data-flying]")),
+    bg: getComputedStyle(document.querySelector("[data-sel]")).backgroundColor,
+  }));
+  if (after.opacity !== 0 || after.flying || after.bg === "rgba(0, 0, 0, 0)") throw new Error(`circle did not land: ${JSON.stringify(after)}`);
+  await A.getByRole("button", { name: "今日" }).first().click();
+  await A.waitForTimeout(700);
+});
+
 await step("holidays are marked in red", async () => {
   await A.getByRole("button", { name: "拡大" }).click();
   // Navigate to November of the current year when possible: 文化の日 (11/3)

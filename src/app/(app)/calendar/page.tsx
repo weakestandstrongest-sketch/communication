@@ -108,8 +108,11 @@ export default function CalendarPage() {
 
   // --- navigation ---------------------------------------------------------
   const moveMonth = (delta: 1 | -1) => {
+    // The selection moves to the same day of the next/previous month (clamped to the month's end).
+    const next = addMonths(selected, delta);
     setDir(delta);
-    setCursor((c) => addMonths(c, delta));
+    setCursor(next);
+    setSelected(next);
   };
   const goToday = () => {
     const t = new Date();
