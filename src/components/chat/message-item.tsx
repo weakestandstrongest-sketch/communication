@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, type ReactNode } from "react";
-import { AlertCircle, Clock3, MoreHorizontal, RotateCcw, Trash2 } from "lucide-react";
+import { AlertCircle, Clock3, CornerUpLeft, MoreHorizontal, RotateCcw, Trash2 } from "lucide-react";
 import type { ChatMessage } from "@/lib/chat-store";
 import type { PersonInfo } from "@/lib/queries";
 import type { Attachment } from "@/lib/types";
@@ -10,6 +10,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { SignedImage } from "@/components/media/signed-image";
 import { FileChip } from "@/components/media/file-chip";
 import { useLongPress } from "@/lib/use-long-press";
+import { useSwipeReply } from "@/lib/use-swipe-reply";
 import { cn } from "@/lib/cn";
 import { AlbumCard, AnnouncementCard, EventCard, PollCard } from "./cards";
 
@@ -119,6 +120,10 @@ export const MessageItem = memo(function MessageItem(props: MessageItemProps) {
   const longPress = useLongPress(() => {
     if (!m.local && !m.deleted_at) props.onActions(m);
   });
+  const { row: swipeRow, content: swipeContent, icon: swipeIcon } = useSwipeReply<HTMLDivElement>(
+    () => props.onReply(m),
+    m.kind !== "system" && !m.local && !m.deleted_at,
+  );
 
   if (m.kind === "system") {
     return (
@@ -225,83 +230,92 @@ export const MessageItem = memo(function MessageItem(props: MessageItemProps) {
   return (
     <div
       id={`m-${m.id}`}
+      ref={swipeRow}
       className={cn(
-        "group/msg flex px-3 transition-colors duration-700",
-        mine ? "justify-end" : "justify-start",
+        "group/msg relative overflow-x-clip transition-colors duration-700",
         groupedWithPrev ? "mt-0.5" : "mt-3",
         props.highlighted && "bg-accent-soft",
         props.isNew && !m.local && "animate-message-in",
       )}
+      style={{ touchAction: "pan-y" }}
     >
-      {!mine && (
-        <div className="mr-2 w-9 shrink-0">
-          {!groupedWithPrev && <Avatar name={sender?.name} src={sender?.avatar} id={m.sender_id} size={36} />}
-        </div>
-      )}
-      <div className={cn("flex min-w-0 max-w-[78%] flex-col sm:max-w-[68%]", mine ? "items-end" : "items-start")}>
-        {!mine && showSender && !groupedWithPrev && (
-          <span className="mb-1 ml-1 text-[12px] font-medium text-label-2">{sender?.name ?? "退会したメンバー"}</span>
-        )}
-        <div className={cn("flex items-end gap-1.5", mine && "flex-row-reverse")}>
-          <div
-            {...longPress}
-            onDoubleClick={() => !m.local && !deleted && props.onReply(m)}
-            className="min-w-0 select-none sm:select-text"
-            role="group"
-            aria-label={`${mine ? "あなた" : (sender?.name ?? "メンバー")}のメッセージ`}
-          >
-            {bubble}
+      {/* revealed by swiping the message to the left (LINE-style reply) */}
+      <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center" aria-hidden>
+        <span ref={swipeIcon} className="flex size-8 items-center justify-center rounded-full bg-surface-3 text-label opacity-0">
+          <CornerUpLeft className="size-4" />
+        </span>
+      </span>
+      <div ref={swipeContent} className={cn("flex px-3", mine ? "justify-end" : "justify-start")}>
+        {!mine && (
+          <div className="mr-2 w-9 shrink-0">
+            {!groupedWithPrev && <Avatar name={sender?.name} src={sender?.avatar} id={m.sender_id} size={36} />}
           </div>
-          {meta}
-          {!m.local && !deleted && (
-            <button
-              type="button"
-              onClick={() => props.onActions(m)}
-              aria-label="メッセージのメニュー"
-              className="hidden size-7 shrink-0 items-center justify-center self-center rounded-full text-label-3 hover:bg-surface-3 sm:flex sm:opacity-0 sm:group-hover/msg:opacity-100 focus:opacity-100"
+        )}
+        <div className={cn("flex min-w-0 max-w-[78%] flex-col sm:max-w-[68%]", mine ? "items-end" : "items-start")}>
+          {!mine && showSender && !groupedWithPrev && (
+            <span className="mb-1 ml-1 text-[12px] font-medium text-label-2">{sender?.name ?? "退会したメンバー"}</span>
+          )}
+          <div className={cn("flex items-end gap-1.5", mine && "flex-row-reverse")}>
+            <div
+              {...longPress}
+              onDoubleClick={() => !m.local && !deleted && props.onReply(m)}
+              className="min-w-0 select-none sm:select-text"
+              role="group"
+              aria-label={`${mine ? "あなた" : (sender?.name ?? "メンバー")}のメッセージ`}
             >
-              <MoreHorizontal className="size-4" />
-            </button>
+              {bubble}
+            </div>
+            {meta}
+            {!m.local && !deleted && (
+              <button
+                type="button"
+                onClick={() => props.onActions(m)}
+                aria-label="メッセージのメニュー"
+                className="hidden size-7 shrink-0 items-center justify-center self-center rounded-full text-label-3 hover:bg-surface-3 sm:flex sm:opacity-0 sm:group-hover/msg:opacity-100 focus:opacity-100"
+              >
+                <MoreHorizontal className="size-4" />
+              </button>
+            )}
+          </div>
+          {failed && (
+            <div className="mt-1 flex items-center gap-2 text-[12px] text-danger" role="alert">
+              <AlertCircle className="size-3.5" aria-hidden />
+              <span>{m.local?.error ?? "送信できませんでした"}</span>
+              <button type="button" onClick={() => props.onRetry(m)} className="flex items-center gap-0.5 font-semibold underline-offset-2 hover:underline">
+                <RotateCcw className="size-3.5" aria-hidden />
+                再送信
+              </button>
+              <button type="button" onClick={() => props.onDiscard(m)} className="flex items-center gap-0.5 text-label-3" aria-label="送信を取り消す">
+                <Trash2 className="size-3.5" aria-hidden />
+              </button>
+            </div>
+          )}
+          {reactions.length > 0 && (
+            <div className={cn("-mt-1 flex flex-wrap gap-1 px-1", mine ? "justify-end" : "justify-start")}>
+              {reactions.map(([emoji, users]) => {
+                const reacted = users.includes(props.myId);
+                const names = users.map((u) => props.people.get(u)?.name ?? "メンバー").join("、");
+                return (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={() => props.onReact(m, emoji)}
+                    title={names}
+                    aria-label={`${emoji} ${users.length}人（${names}）${reacted ? "、リアクション済み" : ""}`}
+                    aria-pressed={reacted}
+                    className={cn(
+                      "relative z-[1] flex h-6 items-center gap-1 rounded-full px-2 text-[13px] shadow-[var(--shadow-card)] ring-1 transition-transform active:scale-95",
+                      reacted ? "bg-accent-soft ring-accent/50" : "bg-surface ring-separator",
+                    )}
+                  >
+                    <span>{emoji}</span>
+                    <span className="text-[11px] font-semibold text-label-2 tabular">{users.length}</span>
+                  </button>
+                );
+              })}
+            </div>
           )}
         </div>
-        {failed && (
-          <div className="mt-1 flex items-center gap-2 text-[12px] text-danger" role="alert">
-            <AlertCircle className="size-3.5" aria-hidden />
-            <span>{m.local?.error ?? "送信できませんでした"}</span>
-            <button type="button" onClick={() => props.onRetry(m)} className="flex items-center gap-0.5 font-semibold underline-offset-2 hover:underline">
-              <RotateCcw className="size-3.5" aria-hidden />
-              再送信
-            </button>
-            <button type="button" onClick={() => props.onDiscard(m)} className="flex items-center gap-0.5 text-label-3" aria-label="送信を取り消す">
-              <Trash2 className="size-3.5" aria-hidden />
-            </button>
-          </div>
-        )}
-        {reactions.length > 0 && (
-          <div className={cn("-mt-1 flex flex-wrap gap-1 px-1", mine ? "justify-end" : "justify-start")}>
-            {reactions.map(([emoji, users]) => {
-              const reacted = users.includes(props.myId);
-              const names = users.map((u) => props.people.get(u)?.name ?? "メンバー").join("、");
-              return (
-                <button
-                  key={emoji}
-                  type="button"
-                  onClick={() => props.onReact(m, emoji)}
-                  title={names}
-                  aria-label={`${emoji} ${users.length}人（${names}）${reacted ? "、リアクション済み" : ""}`}
-                  aria-pressed={reacted}
-                  className={cn(
-                    "relative z-[1] flex h-6 items-center gap-1 rounded-full px-2 text-[13px] shadow-[var(--shadow-card)] ring-1 transition-transform active:scale-95",
-                    reacted ? "bg-accent-soft ring-accent/50" : "bg-surface ring-separator",
-                  )}
-                >
-                  <span>{emoji}</span>
-                  <span className="text-[11px] font-semibold text-label-2 tabular">{users.length}</span>
-                </button>
-              );
-            })}
-          </div>
-        )}
       </div>
     </div>
   );

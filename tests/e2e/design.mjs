@@ -509,6 +509,47 @@ await step("a personal event can be created from the calendar and is private to 
   if ((await admin.from("events").select("id").eq("title", "歯医者の予約")).data.length) throw new Error("not deleted");
 });
 
+await step("swiping a message to the left starts a reply (LINE-style)", async () => {
+  const conv = (await admin.from("conversations").select("id").eq("group_id", groupId).single()).data.id;
+  const sent = await member.client.rpc("send_message", { p_conversation_id: conv, p_client_id: crypto.randomUUID(), p_body: "サビのテンポ速くない？" });
+  if (sent.error) throw new Error(sent.error.message);
+  await A.goto(`${APP_URL}/talk/${conv}`);
+  const msg = A.getByRole("log").getByText("サビのテンポ速くない？");
+  await msg.waitFor();
+  await A.waitForTimeout(400);
+  const box = await msg.boundingBox();
+  const y = box.y + box.height / 2;
+  const cdp = await ctxA.newCDPSession(A);
+  const t = (type, x) => cdp.send("Input.dispatchTouchEvent", { type, touchPoints: type === "touchEnd" ? [] : [{ x, y, id: 0 }] });
+  // a short drag snaps back without replying
+  await t("touchStart", box.x + 40);
+  for (let x = box.x + 40; x >= box.x + 10; x -= 6) await t("touchMove", x);
+  await t("touchEnd", box.x + 10);
+  await A.waitForTimeout(400);
+  if (await A.getByText("伊藤 健に返信").count()) throw new Error("a short drag started a reply");
+  // a long drag past the threshold opens reply mode
+  await t("touchStart", box.x + 120);
+  for (let x = box.x + 120; x >= box.x + 20; x -= 10) {
+    await t("touchMove", x);
+    if (x === box.x + 60 && shots) await shot(A, "d21-swipe-reply-drag");
+  }
+  await t("touchEnd", box.x + 20);
+  await A.getByText("伊藤 健に返信").waitFor({ timeout: 3000 });
+  await A.waitForTimeout(400);
+  // the row's second child is the part that follows the finger
+  const transform = await msg.evaluate((el) => el.closest("[id^='m-']").children[1].style.transform);
+  if (transform) throw new Error(`message did not snap back: ${transform}`);
+  await shot(A, "d22-swipe-reply-mode");
+  await A.getByRole("button", { name: "キャンセル", exact: true }).click();
+  // a mostly vertical drag (scrolling) over a message does not start a reply
+  const v = (type, x, yy) => cdp.send("Input.dispatchTouchEvent", { type, touchPoints: type === "touchEnd" ? [] : [{ x, y: yy, id: 0 }] });
+  await v("touchStart", box.x + 100, y - 60);
+  for (let i = 1; i <= 10; i++) await v("touchMove", box.x + 100 - i * 4, y - 60 + i * 14);
+  await v("touchEnd", box.x + 60, y + 80);
+  await A.waitForTimeout(400);
+  if (await A.getByText("伊藤 健に返信").count()) throw new Error("a vertical drag started a reply");
+});
+
 console.log(`\n${passed} passed, ${failed} failed`);
 await browser.close();
 process.exit(failed ? 1 : 0);

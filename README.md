@@ -24,7 +24,7 @@ These were verified against a real local Supabase stack with several signed-in t
   - Messages arrive in real time and in the right order; retries never create duplicates.
   - Sending is optimistic, with a visible failure state and a 再送信 button. Unsent text survives a reload.
   - Unread counts, a 「ここから未読」 divider, and LINE-style read receipts (既読 N, plus a list of who has read).
-  - Emoji reactions, replies with jump-to-original, @mentions, editing, deletion, image and file attachments.
+  - Emoji reactions, replies (swipe a message left, LINE-style) with jump-to-original, @mentions, editing, deletion, image and file attachments.
   - Pinned and muted conversations, conversation search, typing indicators and online presence.
   - Older messages load in pages without losing your scroll position.
   - 1:1 chats with anyone who shares one of your groups.
@@ -101,12 +101,12 @@ Google sign-in needs OAuth credentials, even locally; see [docs/SETUP.md](docs/S
 | `tests/integration/security.test.ts` | 28 tests: profiles, membership and roles, invites, idempotent sends, unread counts, edit and delete permissions, reactions, mention and reply notifications, DM restrictions, poll rules (single choice, answer changes, closing, anonymity, result visibility), events and attendance (visibility, deadlines, no duplicates), announcements (posting and pinning permissions, read counts), notification privacy, push subscription ownership, reminders, storage isolation and attachment validation |
 | `tests/integration/realtime.test.ts` | Realtime only delivers to members, deletions don't leak to outsiders, and only conversation members can join private typing/presence channels |
 | `tests/integration/personal-events.test.ts` | 5 tests: personal events are private to their owner, create no cards or notifications, and cannot be shared or moved |
-| `tests/e2e/design.mjs` | 20 browser steps: round + buttons, personal events, floating tab bar with a jelly highlight, 意見箱 end to end (including a check that API responses never contain an author id), LINE-style home and search, calendar zoom (buttons and a real two-finger pinch), month roll and swipe, the selection circle flying to the same day of the next month, holidays, timeline, profile photo and group icon upload |
+| `tests/e2e/design.mjs` | 21 browser steps: swipe-to-reply, round + buttons, personal events, floating tab bar with a jelly highlight, 意見箱 end to end (including a check that API responses never contain an author id), LINE-style home and search, calendar zoom (buttons and a real two-finger pinch), month roll and swipe, the selection circle flying to the same day of the next month, holidays, timeline, profile photo and group icon upload |
 | `tests/integration/feedback.test.ts` | 9 tests: authors are never exposed (members, admins, direct table access, notifications), stable aliases, permissions, moderation, cascading deletes, likes, topics, paging, rate limits |
 | `tests/integration/icons.test.ts` | 6 tests: who can upload or read profile photos and group icons |
 | `tests/e2e/journey.mjs` | 26 browser steps with 4 users (iPhone and desktop viewports), covering the full journey in the requirements, including offline send and retry, outsider access, 320px screens, history paging, dark mode, and push delivery and decryption |
 
-Latest run: **53/53 integration tests, 26/26 journey steps and 20/20 design steps passed**, along with `npm run lint`, `npm run typecheck` and `npm run build`.
+Latest run: **53/53 integration tests, 26/26 journey steps and 21/21 design steps passed**, along with `npm run lint`, `npm run typecheck` and `npm run build`.
 
 ## Project structure
 
