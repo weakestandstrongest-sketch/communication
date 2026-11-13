@@ -162,10 +162,11 @@ export default function HomePage() {
               <Settings className="size-[22px]" />
             </Link>
           </div>
-          {/* 名前は、ほかの画面の大きなタイトル（トーク・予定・投票・グループ）と同じ大きさ・同じ高さに（画面を切り替えたときにずれない） */}
+          {/* 名前は、ほかの画面の大きなタイトル（トーク・予定・投票・グループ）と同じ大きさ・同じ高さに（画面を切り替えたときにずれない）。
+              名前を読み込むまでも行の高さ（40px）をとっておく（空だと高さが 0 になり、読み込んだ瞬間に全体がずれる） */}
           <div className="flex items-center gap-4 pb-4">
             <div className="min-w-0 flex-1">
-              <h1 className="truncate font-[family-name:var(--font-display)] text-[32px] leading-tight font-bold tracking-tight">{me?.display_name ?? " "}</h1>
+              <h1 className="h-10 truncate font-[family-name:var(--font-display)] text-[32px] leading-10 font-bold tracking-tight">{me?.display_name ?? "\u00a0"}</h1>
               <p className="mt-0.5 truncate text-[14px] text-label-3">{me?.bio || greeting()}</p>
               <Link href="/settings" className="mt-2 inline-flex h-7 items-center gap-1.5 rounded-full border border-separator-strong px-3 text-[12px] font-medium text-label-2">
                 <Pencil className="size-3" aria-hidden />
