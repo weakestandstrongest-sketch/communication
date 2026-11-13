@@ -103,7 +103,8 @@ export function ConversationList() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="px-4 pt-2 pb-3">
+      {/* 上の余白・下の余白は、ほかの画面（予定の切り替え・投票の絞り込み・グループのボタン）とそろえて 16px */}
+      <div className="px-4 pt-4 pb-4">
         <div className="relative">
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-label-3" aria-hidden />
           <input

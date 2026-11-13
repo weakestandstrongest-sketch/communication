@@ -17,13 +17,14 @@ export default function GroupsPage() {
   return (
     <>
       <PageHeader title="グループ" large />
-      <PageBody className="space-y-5">
+      <PageBody className="space-y-4">
+        {/* ボタンの高さは、ほかの画面の上の部品（検索・切り替え・絞り込み）と同じ 40px */}
         <div className="grid grid-cols-2 gap-2">
-          <Link href="/groups/new" className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-accent text-[15px] font-semibold text-accent-contrast">
+          <Link href="/groups/new" className="flex h-10 items-center justify-center gap-2 rounded-2xl bg-accent text-[15px] font-semibold text-accent-contrast">
             <Plus className="size-4" aria-hidden />
             グループを作成
           </Link>
-          <Link href="/groups/join" className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-accent-soft text-[15px] font-semibold text-accent">
+          <Link href="/groups/join" className="flex h-10 items-center justify-center gap-2 rounded-2xl bg-accent-soft text-[15px] font-semibold text-accent">
             <Ticket className="size-4" aria-hidden />
             招待コードで参加
           </Link>
